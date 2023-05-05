@@ -10,7 +10,7 @@ print(links)
 
 for (i in 1:5){
   curl::curl_download(links[i], destfile = gsub("https://fis.fda.gov/content/Exports/", "", links[i]))
-  links[i]
+  unzip(links[i])
 }
 
 
