@@ -9,6 +9,7 @@ links <- read_html(url) |>
 print(links)
 
 for (i in 1:5){
-  curl::curl_download(links[i], destfile = gsub("https://fis.fda.gov/content/Exports/", "", links[i]))
-  unzip(links[i])
+  local_file <- gsub("https://fis.fda.gov/content/Exports/", "data/", links[i])
+  curl::curl_download(links[i], destfile = local_file)
+  unzip(local_file, exdir = "data/")
 }
