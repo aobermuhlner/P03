@@ -85,7 +85,8 @@ num_reports_per_quarter <- function(data){
 }
 
 num_reports_per_sequence <- function(data){
-  reports <- data[, .N, by = drug_seq]
+  reports <- data[drug_seq < 50, .N, by = drug_seq]
+  #reports <- data[, .N, by = drug_seq]
   return(reports)
 }
 
@@ -94,14 +95,10 @@ calc_therapy_duration <- function(data){
   ther_data[, `:=`(start_dt = as.character(start_dt), end_dt = as.character(end_dt))]
   ther_data[start_dt %like% "^\\d{6}$", start_dt := paste0(start_dt, "01")]
   ther_data[end_dt %like% "^\\d{6}$", end_dt := paste0(end_dt, "01")]
-  
   ther_data[, `:=`(start_dt = as.Date(start_dt, format = "%Y%m%d"),
               end_dt = as.Date(end_dt, format = "%Y%m%d"))]
-  
   durations <- as.numeric(ther_data$end_dt - ther_data$start_dt)
-  
   durations[durations < 0] <- 0
-  
   return(durations)
 }
 
