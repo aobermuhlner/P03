@@ -20,6 +20,9 @@ load_data <- function(entity, years) {
   return(data)
 }
 
+
+# THIS RUNS EVERY TIME app.R IS RUNNING, EXTRACT THIS OR WRITE SOMETHING TO EXECUTE IT ONCE
+########################################
 entities = c('THER', 'RPSR', 'REAC', 'OUTC', 'INDI', 'DRUG', 'DEMO')
 years = c('22','23')
 
@@ -28,18 +31,19 @@ for (entity in entities) {
 }
 ##############
 
-setnames(THER, "dsg_drug_seq", "drug_seq") 
+setnames(THER, "dsg_drug_seq", "drug_seq")
 setnames(INDI, "indi_drug_seq", "drug_seq")
 
 ########################################
 
-join_data <- function(v_drugname){
+join_data <- function(v_drugname, v_sex, v_age_min, v_age_max) {
   
   # Create a data table with the selected_drug details
-  selected_drug <- unique(DRUG[drugname == v_drugname, .(primaryid,caseid, drug_seq, drugname, route, YearQuarter)])
+  selected_drug <- unique(DRUG[drugname == v_drugname, .(primaryid, caseid, drug_seq, drugname, route, YearQuarter)])
   
   # Create a data table with the selected_patients details
-  selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid, .(primaryid,age,sex,wt, reporter_country)])
+  selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & sex == v_sex & age >= v_age_min & age <= v_age_max,
+                                   .(primaryid, age, sex, wt, reporter_country)])
   
   # Create a data table with the selected_therapies details
   selected_therapies <- unique(THER[primaryid %in% selected_drug$primaryid, .(primaryid, drug_seq, start_dt, end_dt, dur)])
@@ -51,10 +55,9 @@ join_data <- function(v_drugname){
   selected_outcomes <- OUTC[primaryid %in% selected_drug$primaryid, .(primaryid, outc_cod)]
   selected_outcomes <- selected_outcomes[selected_outcomes[, .I[which.max(.I)], by = .(primaryid)]$V1]
   
-  
   # Merge all the data tables
-  final_data <- merge(selected_drug, selected_outcomes, by = c("primaryid"), all.x = TRUE)
-  final_data <- merge(final_data, selected_patients, by = c("primaryid"), all.x = TRUE)
+  final_data <- merge(selected_drug, selected_outcomes, by = "primaryid", all.x = TRUE)
+  final_data <- merge(final_data, selected_patients, by = "primaryid", all.x = TRUE)
   final_data <- merge(final_data, selected_therapies, by = c("primaryid", "drug_seq"), all.x = TRUE)
   final_data <- merge(final_data, selected_indications, by = c("primaryid", "drug_seq"), all.x = TRUE)
   
@@ -64,16 +67,17 @@ join_data <- function(v_drugname){
   return(final_data)
 }
 
+
 # Run the function
-final_data <- join_data("IBUPROFEN")
-View(final_data)
+# final_data <- join_data("IBUPROFEN")
+# View(final_data)
 
 #Funktionen
 
 #Liste der Medikamente
 
 unique_drugs <- unique(DRUG$drugname)
-unique_drugs
+# unique_drugs
 
 #Liste aller beobachteten Sequenzen an Medikamenten
 
@@ -116,41 +120,41 @@ outcome_distribution <- function(data){
 
 
 
-#erstellung plots
-library(ggplot2)
-
-# Plotting number of reports per quarter:
-reports_per_quarter <- num_reports_per_quarter(final_data)
-ggplot(reports_per_quarter, aes(x = YearQuarter, y = N)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports")
-
-#Plotting number of reports per sequence:
-reports_per_sequence <- num_reports_per_sequence(final_data)
-ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Number of Reports per Sequence", x = "Sequence", y = "Number of Reports")
-
+# #erstellung plots
+# library(ggplot2)
+# 
+# # Plotting number of reports per quarter:
+# reports_per_quarter <- num_reports_per_quarter(final_data)
+# ggplot(reports_per_quarter, aes(x = YearQuarter, y = N)) +
+#   geom_bar(stat = "identity") +
+#   labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports")
+# 
+# #Plotting number of reports per sequence:
+# reports_per_sequence <- num_reports_per_sequence(final_data)
+# ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
+#   geom_bar(stat = "identity") +
+#   labs(title = "Number of Reports per Sequence", x = "Sequence", y = "Number of Reports")
+# 
 #Plotting histogram of therapy duration:
-therapy_durations <- calc_therapy_duration(final_data)
-hist(therapy_durations)
-ggplot(hist_data, aes(x = mids, y = counts)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Distribution of Therapy Duration", x = "Duration", y = "Frequency")
+# therapy_durations <- calc_therapy_duration(final_data)
+# hist(therapy_durations)
+# ggplot(hist_data, aes(x = mids, y = counts)) +
+#   geom_bar(stat = "identity") +
+#   labs(title = "Distribution of Therapy Duration", x = "Duration", y = "Frequency")
 
-#Plotting top 10 indications:
-top_indications_data <- top_indications(final_data)
-ggplot(top_indications_data, aes(x = reorder(drug_seq, -N), y = N)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports") 
+# #Plotting top 10 indications:
+# top_indications_data <- top_indications(final_data)
+# ggplot(top_indications_data, aes(x = reorder(drug_seq, -N), y = N)) +
+#   geom_bar(stat = "identity") +
+#   labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports")
+# 
+# #Plotting outcome distribution:
+# outcome_distribution_data <- outcome_distribution(final_data)
+# ggplot(outcome_distribution_data, aes(x = outc_cod, y = N)) +
+#   geom_bar(stat = "identity") +
+#   labs(title = "Outcome Distribution", x = "Outcome Code", y = "Number of Outcomes")
 
-#Plotting outcome distribution:
-outcome_distribution_data <- outcome_distribution(final_data)
-ggplot(outcome_distribution_data, aes(x = outc_cod, y = N)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Outcome Distribution", x = "Outcome Code", y = "Number of Outcomes")
-
-View(hist_data)
+# View(hist_data)
 
 
 
