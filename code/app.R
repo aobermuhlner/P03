@@ -110,7 +110,8 @@ server <- function(input, output, session) {
     reports_per_quarter <- num_reports_per_quarter(data)
     ggplot(reports_per_quarter, aes(x = YearQuarter, y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports")
+      labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports") +
+      theme_minimal()
   })
   
   # Render reports per sequence plot
@@ -119,17 +120,22 @@ server <- function(input, output, session) {
     reports_per_sequence <- num_reports_per_sequence(final_data())
     ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Number of Reports per Sequence", x = "Sequence", y = "Number of Reports")
+      labs(title = "Number of Reports per Sequence", x = "Sequence", y = "Number of Reports") +
+      theme_minimal()
   })
   
   # Render therapy duration plot
   output$therapy_durations_plot <- renderPlot({
     data <- final_data()
     therapy_durations <- calc_therapy_duration(data)
-    hist(therapy_durations)
-    ggplot(hist_data, aes(x = mids, y = counts)) +
-      geom_bar(stat = "identity") +
-      labs(title = "Distribution of Therapy Duration", x = "Duration", y = "Frequency")
+    
+    # Create a data frame from the vector of therapy durations
+    therapy_df <- data.frame(duration = therapy_durations)
+    
+    ggplot(therapy_df, aes(x = duration)) +
+      geom_histogram(binwidth = 1) +   # You might need to adjust binwidth
+      labs(title = "Distribution of Therapy Duration", x = "Duration", y = "Frequency") +
+      theme_minimal()
   })
   
   # Render top 10 indications plot
@@ -138,7 +144,8 @@ server <- function(input, output, session) {
     top_indications_data <- top_indications(data)
     ggplot(top_indications_data, aes(x = reorder(drug_seq, -N), y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports")
+      labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports") +
+      theme_minimal()
   })
   
   # Render outcome distribution plot
@@ -147,7 +154,8 @@ server <- function(input, output, session) {
     outcome_distribution_data <- outcome_distribution(data)
     ggplot(outcome_distribution_data, aes(x = outc_cod, y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Outcome Distribution", x = "Outcome Code", y = "Number of Outcomes")
+      labs(title = "Outcome Distribution", x = "Outcome Code", y = "Number of Outcomes") +
+      theme_minimal()
   })
 }
 
