@@ -25,9 +25,8 @@ ui <- fluidPage(
                  selected = NULL,
                  # custom change in options
                  options = list(
-                   placeholder = "Select a drug",
+                   placeholder = "Select a drug"
                    # Limit available options
-                   maxOptions = 5
                  )
                ),
         ),
@@ -45,8 +44,15 @@ ui <- fluidPage(
                selectInput(inputId = "sex_filter",
                            label = "Filter by sex",
                            # TODO: remove "unknown" aka NA values
-                           choices = c("F", "M"),
-                           selected = ""),
+                           choices = c("All", "M", "F"),
+                           selected = "All"),
+        ),
+        column(4,
+               # sex filter
+               selectInput(inputId = "year_filter",
+                           label = "Filter by year",
+                           choices = c("All", "2022", "2023"),
+                           selected = "All"),
         )
       ),
       mainPanel(
@@ -97,7 +103,7 @@ server <- function(input, output, session) {
     # }
     # 
 
-    join_data(input$drug_select, input$sex_filter, input$age_filter[1], input$age_filter[2])
+    join_data(input$drug_select, input$sex_filter, input$age_filter[1], input$age_filter[2], input$year_filter)
   })
   
   output$filtered_drug_table <- renderDataTable({
@@ -106,9 +112,8 @@ server <- function(input, output, session) {
   
   # Render reports per quarter plot
   output$reports_per_quarter_plot <- renderPlot({
-    data <- final_data()
-    reports_per_quarter <- num_reports_per_quarter(data)
-    ggplot(reports_per_quarter, aes(x = YearQuarter, y = N)) +
+    reports_per_quarter <- num_reports_per_quarter(final_data, input$year_filter)
+    ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
       geom_bar(stat = "identity") +
       labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports") +
       theme_minimal()
@@ -142,7 +147,7 @@ server <- function(input, output, session) {
   output$top_indications_plot <- renderPlot({
     data <- final_data()
     top_indications_data <- top_indications(data)
-    ggplot(top_indications_data, aes(x = reorder(drug_seq, -N), y = N)) +
+    ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
       geom_bar(stat = "identity") +
       labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports") +
       theme_minimal()
@@ -152,9 +157,9 @@ server <- function(input, output, session) {
   output$outcome_distribution_plot <- renderPlot({
     data <- final_data()
     outcome_distribution_data <- outcome_distribution(data)
-    ggplot(outcome_distribution_data, aes(x = outc_cod, y = N)) +
+    ggplot(outcome_distribution_data, aes(x = outcome_decoded, y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Outcome Distribution", x = "Outcome Code", y = "Number of Outcomes") +
+      labs(title = "Outcome Distribution", x = "Outcome", y = "Number of Outcomes") +
       theme_minimal()
   })
 }
