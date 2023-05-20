@@ -32,12 +32,12 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
   if (is.null(v_sex) | v_sex == "All") {
     selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & 
                                        age >= v_age_min & age <= v_age_max,
-                                     .(primaryid, age, sex, wt, reporter_country)])
+                                     .(primaryid, age, sex, wt, reporter_country, mfr_sndr)])
   } else {
     selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & 
                                        sex %in% v_sex & 
                                        age >= v_age_min & age <= v_age_max,
-                                     .(primaryid, age, sex, wt, reporter_country)])
+                                     .(primaryid, age, sex, wt, reporter_country, mfr_sndr)])
   }
   selected_therapies <- unique(THER[primaryid %in% selected_drug$primaryid,])
   selected_indications <- unique(INDI[primaryid %in% selected_drug$primaryid,])
@@ -59,7 +59,7 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
 
 ################################ Testing
 # Run the function
-#final_data <- join_data("ZYRTEC", "All" ,0 ,120, "All")
+final_data <- join_data("ZYRTEC", "All" ,0 ,120, "All")
 #View(final_data)
 
 ##################################################
@@ -129,6 +129,13 @@ prod_ai_distribution <- function(data){
   return(prod_ai_dist)
 }
 
+drug_react_distribution <- function(data){
+  data_complete_drug_reaction <- data[!is.na(drug_rec_act)]
+  drug_react <- data_complete_drug_reaction[, .N, by = drug_rec_act]
+  drug_react <- drug_react[order(-N)][1:10]
+  return(drug_react)
+}
+
 
 # library(ggplot2)
 # 
@@ -150,7 +157,7 @@ plot_prod_ai_distribution <- function(data) {
     ggtitle("Top 10 Drug Combinations in 'prod_ai'")
   print(p)
 }
-# plot_prod_ai_distribution(final_data)
+#plot_prod_ai_distribution(final_data)
 
 
 
@@ -168,6 +175,19 @@ plot_manufactorer_distribution <- function(data) {
   print(p)
 }
 # plot_manufactorer_distribution(final_data)
+
+plot_drug_reaction <- function(data) {
+  reaction <- drug_react_distribution(data)
+  reaction <- reaction[order(-N)]  # Order the data.table from highest to lowest count
+  p <- ggplot(reaction, aes(x = drug_rec_act, y = N)) +
+    geom_col() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    xlab("Drug Reaction") +
+    ylab("Count") +
+    ggtitle("Drug Reaction by Top 10 Reaction")
+  print(p)
+}
+plot_drug_reaction(final_data)
 
 # # Therapy length
 # therapy_durations <- calc_therapy_duration_relative(final_data, "long term")
