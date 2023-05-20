@@ -59,7 +59,7 @@ ui <- fluidPage(
                            selected = "All"),
         ),
         conditionalPanel(
-          condition = "input.tabPanelId == 'therapy_tab'",
+          condition = "input.tabPanelId == 'therapy_tab'", # JavaScript syntax
           column(4,
                  selectInput(inputId = "therapy_filter",
                              label = "Filter by therapy duration",
@@ -68,22 +68,30 @@ ui <- fluidPage(
           )
         )
       ),
-      mainPanel(
-        id = "main-panel",
-        tabsetPanel(
-          id = "tabPanelId",
-          tabPanel("Reports per Quarter", plotOutput("reports_per_quarter_plot")),
-          tabPanel("Reports per Sequence", plotOutput("reports_per_sequence_plot")),
-          tabPanel("Therapy Duration", value="therapy_tab", plotOutput("therapy_durations_plot")),
-          tabPanel("Top 10 Indications", plotOutput("top_indications_plot")),
-          tabPanel("Outcome Distribution", plotOutput("outcome_distribution_plot")),
-          tabPanel("Drug Reaction", plotOutput("drug_reaction_plot")),
-          tabPanel("Medication mix", plotOutput("medication_mix_plot")),
-          tabPanel("Top 10 Manufacturers", plotOutput("top_manufacturers_plot")),
-          tabPanel("Filtered Drug Table", dataTableOutput("filtered_drug_table"))
+      conditionalPanel(
+        condition = "input.drug_select", # JavaScript syntax
+        mainPanel(
+          id = "main-panel",
+          tabsetPanel(
+            id = "tabPanelId",
+            tabPanel("Reports per Quarter", plotOutput("reports_per_quarter_plot")),
+            tabPanel("Reports per Sequence", plotOutput("reports_per_sequence_plot")),
+            tabPanel("Therapy Duration", value="therapy_tab", plotOutput("therapy_durations_plot")),
+            tabPanel("Top 10 Indications", plotOutput("top_indications_plot")),
+            tabPanel("Outcome Distribution", plotOutput("outcome_distribution_plot")),
+            tabPanel("Drug Reaction", plotOutput("drug_reaction_plot")),
+            tabPanel("Medication mix", plotOutput("medication_mix_plot")),
+            tabPanel("Top 10 Manufacturers", plotOutput("top_manufacturers_plot")),
+            tabPanel("Filtered Drug Table", dataTableOutput("filtered_drug_table"))
+          )
         )
       )
-    ),
+      # ,
+      # conditionalPanel(
+      #   condition = "!input.drug_select",
+      #   textOutput("drug_select_message") # Server will need to output this message.
+      # )
+    )
 )
 
 # -----------------------------------------------------------------------------
@@ -108,7 +116,7 @@ server <- function(input, output, session) {
               v_age_min = input$age_filter[1],
               v_age_max = input$age_filter[2],
               v_year = input$year_filter)
-
+    print(input$drug_select)
     return(data)
 
   })
@@ -116,6 +124,10 @@ server <- function(input, output, session) {
   output$filtered_drug_table <- renderDataTable({
     final_data()
   })
+  
+  # output$drug_select_message <- renderText({
+  #   "Select drug"
+  # })
   
   # Render reports per quarter plot
   output$reports_per_quarter_plot <- renderPlot({
