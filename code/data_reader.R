@@ -67,6 +67,7 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
 
 # Aufbereitungen für PLots und Listen
 
+unique_drugs <- DRUG$drugname %>% table %>% sort(decreasing = TRUE) %>% names %>% .[1:10]
 
 
 #Funktionen für plots
@@ -89,6 +90,20 @@ calc_therapy_duration <- function(data) {
   return(ther_data$dur_converted)
 }
 
+calc_therapy_duration_relative <- function(data, therapy_length = "All") {
+  ther_data <- data[!is.na(dur_converted) & dur_converted > 0]
+  
+  if (therapy_length == "short term") {
+    ther_data <- ther_data[dur_converted <= 30]
+  } else if (therapy_length == "medium term") {
+    ther_data <- ther_data[dur_converted > 30 & dur_converted <= 365]
+  } else if (therapy_length == "long term") {
+    ther_data <- ther_data[dur_converted > 365]
+  } # If therapy_length is "All", no additional filtering is needed
+  
+  return(ther_data$dur_converted)
+}
+
 top_indications <- function(data){
   indications <- data[, .N, by = indi_pt] 
   top_indications <- indications[order(-N)][1:10]
@@ -101,11 +116,70 @@ outcome_distribution <- function(data){
   return(outcome_dist)
 }
 
+manufactorer_distribution <- function(data){
+  data_complete_mfr <- data[!is.na(mfr_sndr)]
+  manufactorer_dist <- data_complete_mfr[, .N, by = mfr_sndr]
+  manufactorer_dist <- manufactorer_dist[order(-N)][1:10]  # Order by count (N) in descending order and take the top 10
+  return(manufactorer_dist)
+}
 
-# library(ggplot2)
+prod_ai_distribution <- function(data){
+  data_complete_prod_ai <- data[!is.na(prod_ai)]
+  prod_ai_dist <- data_complete_prod_ai[, .N, by = prod_ai]
+  prod_ai_dist <- prod_ai_dist[order(-N)][1:10]  # Order by count (N) in descending order and take the top 10
+  return(prod_ai_dist)
+}
+
+
+library(ggplot2)
+
+unique(final_data$prod_ai)
+
+prod_ai_distribution(final_data)
 
 # #erstellung plots
 # library(ggplot2)
+
+# Drug mix by group
+plot_prod_ai_distribution <- function(data) {
+  prod_ai_dist <- prod_ai_distribution(data)
+  p <- ggplot(prod_ai_dist, aes(x = reorder(prod_ai, -N), y = N)) + 
+    geom_col() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    xlab("Drug Combinations") +
+    ylab("Count") +
+    ggtitle("Top 10 Drug Combinations in 'prod_ai'")
+  print(p)
+}
+plot_prod_ai_distribution(final_data)
+
+
+
+
+# Manufactorer_distribution
+plot_manufactorer_distribution <- function(data) {
+  manufactorer_dist <- manufactorer_distribution(data)
+  manufactorer_dist <- manufactorer_dist[order(-N)]  # Order the data.table from highest to lowest count
+  p <- ggplot(manufactorer_dist, aes(x = reorder(mfr_sndr, -N), y = N)) +  # Also reorder the x-axis to match
+    geom_col() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    xlab("Manufacturer Sender") +
+    ylab("Count") +
+    ggtitle("Outcome Distribution by Top 10 Manufacturer Senders")
+  print(p)
+}
+plot_manufactorer_distribution(final_data)
+
+# Therapy length
+therapy_durations <- calc_therapy_duration_relative(final_data, "long term")
+data <- data.frame(duration = therapy_durations)
+ggplot(data, aes(x=duration)) +
+  geom_histogram() +
+  labs(x="Therapy Duration (days)", y="Count", title="Histogram of Therapy Durations") +
+  theme_minimal()
+
+
+
 # 
 # Plotting number of reports per quarter:
 # reports_per_quarter <- num_reports_per_quarter(final_data)
@@ -127,8 +201,8 @@ outcome_distribution <- function(data){
 #  labs(x="Therapy Duration (days)", y="Count", title="Histogram of Therapy Durations") +
 #  theme_minimal()
 
- 
- 
+
+
 
 # #Plotting top 10 indications:
 #top_indications_data <- top_indications(final_data)
@@ -143,7 +217,6 @@ outcome_distribution <- function(data){
 #   labs(title = "Outcome Distribution", x = "Outcome Code", y = "Number of Outcomes")
 
 # View(hist_data)
-
 
 
 
