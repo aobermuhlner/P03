@@ -2,6 +2,7 @@ library(shiny)
 library(shinyWidgets)
 library(data.table)
 library(ggplot2)
+library(dplyr)
 
 source("data_reader.R")
 
@@ -11,8 +12,10 @@ drug_freq <- table(DRUG$drugname)
 unique_drugs<- names(drug_freq)[order(drug_freq, decreasing = TRUE)]
 
 age_min <- min(DEMO$age, na.rm = TRUE)
-age_max <- ifelse(max(DEMO$age, na.rm = TRUE) < 150, max(DEMO$age, na.rm = TRUE), 150)
+age_max <- max(DEMO$age, na.rm = TRUE)
 
+
+custom_column <- c("primaryid","caseid","drug_seq","drugname","prod_ai", "route","year","quarter","age", "sex","reporter_country","outcome_decoded", "indi_pt", "drug_rec_act")
 # UI
 # -----------------------------------------------------------------------------
 ui <- fluidPage(
@@ -66,6 +69,15 @@ ui <- fluidPage(
                              choices = c("All", "Short term","Medium term", "Long term"),
                              selected = "All")
           )
+        ),
+        conditionalPanel(
+          condition = "input.tabPanelId == 'table_tab'", # JavaScript syntax
+          column(4,
+                 checkboxGroupInput(inputId = "df_column_filter",
+                                    label = "Columns in table to show:",
+                                    choices = custom_column,
+                                    selected = custom_column
+          )
         )
       ),
       conditionalPanel(
@@ -82,7 +94,7 @@ ui <- fluidPage(
             tabPanel("Drug Reaction", plotOutput("drug_reaction_plot")),
             tabPanel("Medication mix", plotOutput("medication_mix_plot")),
             tabPanel("Top 10 Manufacturers", plotOutput("top_manufacturers_plot")),
-            tabPanel("Filtered Drug Table", dataTableOutput("filtered_drug_table"))
+            tabPanel("Filtered Drug Table", value="table_tab", dataTableOutput("filtered_drug_table"))
           )
         )
       )
@@ -91,6 +103,7 @@ ui <- fluidPage(
       #   condition = "!input.drug_select",
       #   textOutput("drug_select_message") # Server will need to output this message.
       # )
+    )
     )
 )
 
@@ -122,7 +135,11 @@ server <- function(input, output, session) {
   })
   
   output$filtered_drug_table <- renderDataTable({
-    final_data()
+    data <- final_data()
+    new_df <- data %>%
+      select(input$df_column_filter)
+    return(new_df)
+    
   })
   
   # output$drug_select_message <- renderText({
