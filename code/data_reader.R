@@ -98,12 +98,12 @@ DEMO$age_cod <- NULL
 
 outcome_lookup <- data.frame(
   CODE = c("DE", "LT", "HO", "DS", "CA", "RI", "OT"),
-  MEANING_TEXT = c("Death", 
-                   "Life-Threatening", 
-                   "Hospitalization - Initial or Prolonged", 
-                   "Disability", 
-                   "Congenital Anomaly", 
-                   "Required Intervention to Prevent Permanent Impairment/Damage", 
+  MEANING_TEXT = c("Death",
+                   "Life-Threatening",
+                   "Hospitalization - Initial or Prolonged",
+                   "Disability",
+                   "Congenital Anomaly",
+                   "Required Intervention to Prevent Permanent Impairment/Damage",
                    "Other Serious (Important Medical Event)")
 )
 OUTC[, outcome_decoded := outcome_lookup$MEANING_TEXT[match(outc_cod, outcome_lookup$CODE)]]
@@ -114,46 +114,64 @@ REAC <-REAC[drug_rec_act!=""]
 ########################################
 
 join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, v_year = NULL) {
-  
-  # If variables are NULL, select all
-  v_drugname <- ifelse(is.null(v_drugname), unique(DRUG$drugname), v_drugname)
-  
-  if (is.null(v_sex) | v_sex == "All") {
-    v_sex <- unique(DEMO$sex)
-  }
-  if (is.null(v_year) | v_year == "All") {
-    v_year <- unique(DRUG$year)
-  }
+
   v_age_min <- ifelse(is.null(v_age_min), min(DEMO$age, na.rm = TRUE), v_age_min)
   v_age_max <- ifelse(is.null(v_age_max), max(DEMO$age, na.rm = TRUE), v_age_max)
+  print(v_year)
   
+  if (is.null(v_drugname) | v_drugname == "") {
+    if (is.null(v_year) | v_year == "All") {
+      selected_drug <- unique(DRUG[,
+                                   .(primaryid, caseid, drug_seq, drugname, route, year, quarter)])
+      print("1")
+    } else {
+      selected_drug <- unique(DRUG[year %in% as.numeric(v_year),
+                                   .(primaryid, caseid, drug_seq, drugname, route, year, quarter)])
+      print(v_year)
+    }
+  } else {
+    if (is.null(v_year) | v_year == "All") {
+      selected_drug <- unique(DRUG[drugname == v_drugname,
+                                   .(primaryid, caseid, drug_seq, drugname, route, year, quarter)])
+      print("3")
+    } else {
+      selected_drug <- unique(DRUG[drugname == v_drugname & year %in% as.numeric(v_year),
+                                   .(primaryid, caseid, drug_seq, drugname, route, year, quarter)])
+      print("4")
+    }
+  }
   
-  selected_drug <- unique(DRUG[drugname == v_drugname & year %in%  as.numeric(v_year), 
-                               .(primaryid, caseid, drug_seq, drugname, route, year, quarter)])
+  if (is.null(v_sex) | v_sex == "All") {
+    selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & 
+                                       age >= v_age_min & age <= v_age_max,
+                                     .(primaryid, age, sex, wt, reporter_country)])
+  } else {
+    selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & 
+                                       sex %in% v_sex & 
+                                       age >= v_age_min & age <= v_age_max,
+                                     .(primaryid, age, sex, wt, reporter_country)])
+  }
   
-  selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & sex %in% v_sex & age >= v_age_min & age <= v_age_max,
-                                   .(primaryid, age, sex, wt, reporter_country)])
-  
-  selected_therapies <- unique(THER[primaryid %in% selected_drug$primaryid, 
+  selected_therapies <- unique(THER[primaryid %in% selected_drug$primaryid,
                                     .(primaryid, caseid, drug_seq, dur_converted, end_dt)])
-  
-  selected_indications <- unique(INDI[primaryid %in% selected_drug$primaryid, 
+
+  selected_indications <- unique(INDI[primaryid %in% selected_drug$primaryid,
                                       .(primaryid, caseid, drug_seq, indi_pt)])
-  
-  
-  selected_indications <- unique(INDI[primaryid %in% selected_drug$primaryid, 
+
+
+  selected_indications <- unique(INDI[primaryid %in% selected_drug$primaryid,
                                       .(primaryid, caseid, drug_seq, indi_pt)])
-  
-  selected_outcomes <- OUTC[primaryid %in% selected_drug$primaryid, 
+
+  selected_outcomes <- OUTC[primaryid %in% selected_drug$primaryid,
                             .(primaryid, outc_cod, outcome_decoded)]
   selected_outcomes <- selected_outcomes[selected_outcomes[, .I[which.max(.I)], by = .(primaryid)]$V1]
-  
+
 # Merge all the data tables
-  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = TRUE)
-  final_data <- merge(final_data, selected_outcomes, by = "primaryid", all.x = TRUE)
-  final_data <- merge(final_data, selected_therapies, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
-  final_data <- merge(final_data, selected_indications, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
-  final_data <- merge(final_data, REAC, by = c("primaryid", "caseid"), all.x = TRUE)
+  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = FALSE)
+  final_data <- merge(final_data, selected_outcomes, by = "primaryid", all.x = FALSE)
+  final_data <- merge(final_data, selected_therapies, by = c("primaryid", "drug_seq", "caseid"), all.x = FALSE)
+  final_data <- merge(final_data, selected_indications, by = c("primaryid", "drug_seq", "caseid"), all.x = FALSE)
+  final_data <- merge(final_data, REAC, by = c("primaryid", "caseid"), all.x = FALSE)
 
   # Ensure only unique rows in the final data
   final_data <- unique(final_data)
@@ -161,12 +179,11 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
   return(final_data)
 }
 
-
 ################################ Testing
 # Run the function
-final_data <- join_data("IBUPROFEN", "All" ,0 ,120, "All")
- View(final_data)
- 
+# final_data <- join_data("HUMIRA", "ALL", 0, 120, v_year = "ALL")
+#  View(final_data)
+#  
  unique(DEMO$occr_country)
  
 ##################################################
@@ -182,12 +199,8 @@ unique_drugs <- DRUG$drugname %>% table %>% sort(decreasing = TRUE) %>% names %>
 
 
 #Funktionen für plots
-num_reports_per_quarter <- function(data, v_year = NULL){
-  if (v_year == "All") {
-    reports <- data[, .N, by = quarter]
-  } else {
-    reports <- data[year == as.numeric(v_year), .N, by = quarter]
-  }
+num_reports_per_quarter <- function(data){
+  reports <- data[, .N, by = quarter]
   return(reports)
 }
 
@@ -218,17 +231,17 @@ outcome_distribution <- function(data){
 }
 
 
-library(ggplot2)
+# library(ggplot2)
 
 # #erstellung plots
 # library(ggplot2)
 # 
-# # Plotting number of reports per quarter:
-# reports_per_quarter <- num_reports_per_quarter(final_data, "2022")
+# Plotting number of reports per quarter:
+# reports_per_quarter <- num_reports_per_quarter(final_data)
 # ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
 #   geom_bar(stat = "identity") +
 #   labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports")
-# 
+
 # #Plotting number of reports per sequence:
 # reports_per_sequence <- num_reports_per_sequence(final_data)
 # ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
