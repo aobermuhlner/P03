@@ -44,10 +44,8 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
   selected_outcomes <- OUTC[primaryid %in% selected_drug$primaryid, 
                             .(primaryid, outc_cod, outcome_decoded)]
   selected_outcomes <- selected_outcomes[selected_outcomes[, .I[which.max(.I)], by = .(primaryid)]$V1]
-  print(v_age_min)
-  print(v_age_max)
   # Merge all the data tables
-  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = ifelse((v_sex == "All" & v_age_min == 0 & v_age_max == 150), TRUE, FALSE))
+  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = ifelse((v_sex == "All" & v_age_min ==  min(DEMO$age, na.rm = TRUE) & v_age_max ==  max(DEMO$age, na.rm = TRUE)), TRUE, FALSE))
   final_data <- merge(final_data, selected_outcomes, by = "primaryid", all.x = TRUE)
   final_data <- merge(final_data, selected_therapies, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
   final_data <- merge(final_data, selected_indications, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
@@ -134,9 +132,9 @@ prod_ai_distribution <- function(data){
 
 # library(ggplot2)
 # 
-unique(final_data$prod_ai)
-
-prod_ai_distribution(final_data)
+# unique(final_data$prod_ai)
+# 
+# prod_ai_distribution(final_data)
 
 # #erstellung plots
 # library(ggplot2)
