@@ -63,7 +63,7 @@ ui <- fluidPage(
           column(4,
                  selectInput(inputId = "therapy_filter",
                              label = "Filter by therapy duration",
-                             choices = c("All", "Short term", "Long term"),
+                             choices = c("All", "Short term","Medium term", "Long term"),
                              selected = "All")
           )
         )
@@ -149,7 +149,7 @@ server <- function(input, output, session) {
 
   # Render therapy duration plot
   output$therapy_durations_plot <- renderPlot({
-    therapy_durations <- calc_therapy_duration(final_data())
+    therapy_durations <- calc_therapy_duration_relative(final_data(),input$therapy_filter)
 
     # Create a data frame from the vector of therapy durations
     therapy_df <- data.frame(duration = therapy_durations)

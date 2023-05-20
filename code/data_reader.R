@@ -91,14 +91,14 @@ calc_therapy_duration <- function(data) {
   return(ther_data$dur_converted)
 }
 
-calc_therapy_duration_relative <- function(data, therapy_length = "All") {
+calc_therapy_duration_relative <- function(data, therapy_length) {
   ther_data <- data[!is.na(dur_converted) & dur_converted > 0]
-  
-  if (therapy_length == "short term") {
+  print(therapy_length)
+  if (therapy_length == "Short term") {
     ther_data <- ther_data[dur_converted <= 30]
-  } else if (therapy_length == "medium term") {
+  } else if (therapy_length == "Medium term") {
     ther_data <- ther_data[dur_converted > 30 & dur_converted <= 365]
-  } else if (therapy_length == "long term") {
+  } else if (therapy_length == "Long term") {
     ther_data <- ther_data[dur_converted > 365]
   } # If therapy_length is "All", no additional filtering is needed
   
@@ -134,9 +134,9 @@ prod_ai_distribution <- function(data){
 
 # library(ggplot2)
 # 
-unique(final_data$prod_ai)
+#unique(final_data$prod_ai)
 
-prod_ai_distribution(final_data)
+#prod_ai_distribution(final_data)
 
 # #erstellung plots
 # library(ggplot2)
