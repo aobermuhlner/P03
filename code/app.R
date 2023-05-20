@@ -5,6 +5,10 @@ library(ggplot2)
 
 source("data_reader.R")
 
+drug_freq <- table(DRUG$drugname)
+# Sort by frequency (in decreasing order) and get the names of the drugs
+unique_drugs<- names(drug_freq)[order(drug_freq, decreasing = TRUE)]
+
 # UI (OR CLIENT-SIDE, I THINK)
 # -----------------------------------------------------------------------------
 # Frontend basically

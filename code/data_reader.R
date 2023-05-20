@@ -9,8 +9,6 @@ INDI <- fread("../../data/processed_data/INDI.csv")
 OUTC <- fread("../../data/processed_data/OUTC.csv")
 REAC <- fread("../../data/processed_data/REAC.csv")
 
-
-
 # creates and index data.table which is called in join_Data
 idx <- data.table(drugname = unlist(strsplit(DRUG$drugname, "\\\\")),
                   rownum = rep(1:nrow(DRUG), times = lengths(strsplit(DRUG$drugname, "\\\\"))),
@@ -20,9 +18,9 @@ idx <- data.table(drugname = unlist(strsplit(DRUG$drugname, "\\\\")),
 
 join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, v_year = NULL) {
   
-  if (is.null(v_sex) | v_sex == "All") {
-    v_sex <- unique(DEMO$sex)
-  }
+  # if (is.null(v_sex) | v_sex == "All") {
+  #   v_sex <- unique(DEMO$sex)
+  # }
   if (is.null(v_year) | v_year == "All") {
     v_year <- unique(DRUG$year)
   }
@@ -31,7 +29,16 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
   
   selected_drug <- DRUG[idx[J(v_drugname), unique(rownum)]]
   selected_drug <- unique(selected_drug[year %in%  as.numeric(v_year),])
-  selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & sex %in% v_sex & age >= v_age_min & age <= v_age_max,])
+  if (is.null(v_sex) | v_sex == "All") {
+    selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & 
+                                       age >= v_age_min & age <= v_age_max,
+                                     .(primaryid, age, sex, wt, reporter_country)])
+  } else {
+    selected_patients <- unique(DEMO[primaryid %in% selected_drug$primaryid & 
+                                       sex %in% v_sex & 
+                                       age >= v_age_min & age <= v_age_max,
+                                     .(primaryid, age, sex, wt, reporter_country)])
+  }
   selected_therapies <- unique(THER[primaryid %in% selected_drug$primaryid,])
   selected_indications <- unique(INDI[primaryid %in% selected_drug$primaryid,])
   selected_outcomes <- OUTC[primaryid %in% selected_drug$primaryid, 
@@ -39,7 +46,7 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
   selected_outcomes <- selected_outcomes[selected_outcomes[, .I[which.max(.I)], by = .(primaryid)]$V1]
   
   # Merge all the data tables
-  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = TRUE)
+  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = ifelse((is.null(v_sex) | v_sex == "All"), TRUE, FALSE))
   final_data <- merge(final_data, selected_outcomes, by = "primaryid", all.x = TRUE)
   final_data <- merge(final_data, selected_therapies, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
   final_data <- merge(final_data, selected_indications, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
