@@ -5,18 +5,19 @@ library(ggplot2)
 
 source("data_reader.R")
 
+# Frequency of drugnames
 drug_freq <- table(DRUG$drugname)
 # Sort by frequency (in decreasing order) and get the names of the drugs
 unique_drugs<- names(drug_freq)[order(drug_freq, decreasing = TRUE)]
 
-# UI (OR CLIENT-SIDE, I THINK)
+age_min <- min(DEMO$age, na.rm = TRUE)
+age_max <- ifelse(max(DEMO$age, na.rm = TRUE) < 150, max(DEMO$age, na.rm = TRUE), 150)
+
+# UI
 # -----------------------------------------------------------------------------
-# Frontend basically
-# UI, what button or widget should be displayed and how
-# R functions to generate HTML, CSS and JavaScript code
 ui <- fluidPage(
     fluidPage(
-      titlePanel("Nebenwirkung von Medikamente"),
+      titlePanel("Side effects of medicaments"),
       
       # Create a new Row in the UI for selectInputs
       fluidRow(
@@ -39,16 +40,15 @@ ui <- fluidPage(
                sliderInput(inputId = "age_filter",
                            label = "Filter by age",
                            # TODO: set range to min() max() of demo$age
-                           min = 0,
-                           max = 120,
-                           value = c(0, 120)),
+                           min = age_min,
+                           max = age_max,
+                           value = c(age_min, age_max)),
         ),
         column(4,
                # sex filter
                selectInput(inputId = "sex_filter",
                            label = "Filter by sex",
-                           # TODO: remove "unknown" aka NA values
-                           choices = c("All", "M", "F"),
+                           choices = c("All", "Male" = "M", "Female" = "F"),
                            selected = "All"),
         ),
         column(4,
@@ -57,16 +57,29 @@ ui <- fluidPage(
                            label = "Filter by year",
                            choices = c("All", "2022", "2023"),
                            selected = "All"),
+        ),
+        conditionalPanel(
+          condition = "input.tabPanelId == 'therapy_tab'",
+          column(4,
+                 selectInput(inputId = "therapy_filter",
+                             label = "Filter by therapy duration",
+                             choices = c("All", "Short term", "Long term"),
+                             selected = "All")
+          )
         )
       ),
       mainPanel(
         id = "main-panel",
         tabsetPanel(
+          id = "tabPanelId",
           tabPanel("Reports per Quarter", plotOutput("reports_per_quarter_plot")),
           tabPanel("Reports per Sequence", plotOutput("reports_per_sequence_plot")),
-          tabPanel("Therapy Duration", plotOutput("therapy_durations_plot")),
+          tabPanel("Therapy Duration", value="therapy_tab", plotOutput("therapy_durations_plot")),
           tabPanel("Top 10 Indications", plotOutput("top_indications_plot")),
           tabPanel("Outcome Distribution", plotOutput("outcome_distribution_plot")),
+          tabPanel("Drug Reaction", plotOutput("drug_reaction_plot")),
+          tabPanel("Medication mix", plotOutput("medication_mix_plot")),
+          tabPanel("Top 10 Manufacturers", plotOutput("top_manufacturers_plot")),
           tabPanel("Filtered Drug Table", dataTableOutput("filtered_drug_table"))
         )
       )
@@ -76,14 +89,7 @@ ui <- fluidPage(
 # -----------------------------------------------------------------------------
 # SERVER-SIDE
 # -----------------------------------------------------------------------------
-
-# Backend, computes logic, data processing and interactions
-# Uses for example reactive expressions, event handlers and other server-side func
 server <- function(input, output, session) {
-  # input accesses the list of all inputId from UI-side
-  # output is a list of outputs that will be displayed in the UI
-  # session, current interaction link to client from server-side
-
 
   updateSelectizeInput(session,
                        inputId = 'drug_select',
@@ -96,21 +102,12 @@ server <- function(input, output, session) {
                          maxOptions = 10
                        ))
   
-  # "reactive" expressions store intermediate results, perform calculations and filter data
-  # if (filter) value changes, the current expression gets invalidated
-  # and re-exceuted to output the new value
   final_data <- reactive({
     data <- join_data(v_drugname = input$drug_select,
               v_sex = input$sex_filter,
               v_age_min = input$age_filter[1],
               v_age_max = input$age_filter[2],
               v_year = input$year_filter)
-    
-    print(input$drug_select)
-    print(input$sex_filter)
-    print(input$age_filter[1])
-    print(input$age_filter[2])
-    print(input$year_filter)
 
     return(data)
 
@@ -168,6 +165,22 @@ server <- function(input, output, session) {
       labs(title = "Outcome Distribution", x = "Outcome", y = "Number of Outcomes") +
       theme_minimal()
   })
+  
+  # Render outcome drug_reaction_plot
+  output$drug_reaction_plot <- renderPlot({
+    # ENTER PLOT CODE HERE
+  })
+  
+  # Render outcome Medication mix
+  output$medication_mix_plot <- renderPlot({
+    # ENTER PLOT CODE HERE
+  })
+  
+  # Render outcome Medication mix
+  output$ top_manufacturers_plot <- renderPlot({
+    # ENTER PLOT CODE HERE
+  })
+ 
 }
 
 # -----------------------------------------------------------------------------

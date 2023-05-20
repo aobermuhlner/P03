@@ -44,9 +44,10 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
   selected_outcomes <- OUTC[primaryid %in% selected_drug$primaryid, 
                             .(primaryid, outc_cod, outcome_decoded)]
   selected_outcomes <- selected_outcomes[selected_outcomes[, .I[which.max(.I)], by = .(primaryid)]$V1]
-  
+  print(v_age_min)
+  print(v_age_max)
   # Merge all the data tables
-  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = ifelse((is.null(v_sex) | v_sex == "All"), TRUE, FALSE))
+  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = ifelse((v_sex == "All" & v_age_min == 0 & v_age_max == 150), TRUE, FALSE))
   final_data <- merge(final_data, selected_outcomes, by = "primaryid", all.x = TRUE)
   final_data <- merge(final_data, selected_therapies, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
   final_data <- merge(final_data, selected_indications, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
@@ -67,7 +68,7 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
 
 # Aufbereitungen für PLots und Listen
 
-unique_drugs <- DRUG$drugname %>% table %>% sort(decreasing = TRUE) %>% names %>% .[1:10]
+# unique_drugs <- DRUG$drugname %>% table %>% sort(decreasing = TRUE) %>% names %>% .[1:10]
 
 
 #Funktionen für plots
@@ -131,8 +132,8 @@ prod_ai_distribution <- function(data){
 }
 
 
-library(ggplot2)
-
+# library(ggplot2)
+# 
 unique(final_data$prod_ai)
 
 prod_ai_distribution(final_data)
@@ -143,15 +144,15 @@ prod_ai_distribution(final_data)
 # Drug mix by group
 plot_prod_ai_distribution <- function(data) {
   prod_ai_dist <- prod_ai_distribution(data)
-  p <- ggplot(prod_ai_dist, aes(x = reorder(prod_ai, -N), y = N)) + 
-    geom_col() + 
+  p <- ggplot(prod_ai_dist, aes(x = reorder(prod_ai, -N), y = N)) +
+    geom_col() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     xlab("Drug Combinations") +
     ylab("Count") +
     ggtitle("Top 10 Drug Combinations in 'prod_ai'")
   print(p)
 }
-plot_prod_ai_distribution(final_data)
+# plot_prod_ai_distribution(final_data)
 
 
 
@@ -161,22 +162,22 @@ plot_manufactorer_distribution <- function(data) {
   manufactorer_dist <- manufactorer_distribution(data)
   manufactorer_dist <- manufactorer_dist[order(-N)]  # Order the data.table from highest to lowest count
   p <- ggplot(manufactorer_dist, aes(x = reorder(mfr_sndr, -N), y = N)) +  # Also reorder the x-axis to match
-    geom_col() + 
+    geom_col() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     xlab("Manufacturer Sender") +
     ylab("Count") +
     ggtitle("Outcome Distribution by Top 10 Manufacturer Senders")
   print(p)
 }
-plot_manufactorer_distribution(final_data)
+# plot_manufactorer_distribution(final_data)
 
-# Therapy length
-therapy_durations <- calc_therapy_duration_relative(final_data, "long term")
-data <- data.frame(duration = therapy_durations)
-ggplot(data, aes(x=duration)) +
-  geom_histogram() +
-  labs(x="Therapy Duration (days)", y="Count", title="Histogram of Therapy Durations") +
-  theme_minimal()
+# # Therapy length
+# therapy_durations <- calc_therapy_duration_relative(final_data, "long term")
+# data <- data.frame(duration = therapy_durations)
+# ggplot(data, aes(x=duration)) +
+#   geom_histogram() +
+#   labs(x="Therapy Duration (days)", y="Count", title="Histogram of Therapy Durations") +
+#   theme_minimal()
 
 
 
