@@ -60,6 +60,7 @@ conversion_factors <- list(
   HR = 1/8766
 )
 
+
 DEMO$age <- as.numeric(DEMO$age)
 non_empty_age_cod <- DEMO$age_cod != ""
 factors <- conversion_factors[DEMO$age_cod[non_empty_age_cod]]
@@ -67,6 +68,7 @@ factors <- conversion_factors[DEMO$age_cod[non_empty_age_cod]]
 non_empty_age <- DEMO$age_cod[non_empty_age_cod]
 age_factors <- unlist(factors)[non_empty_age]
 DEMO$age[non_empty_age_cod] <- round(DEMO$age[non_empty_age_cod] * rep(age_factors, length.out = sum(non_empty_age_cod)),2)
+DEMO[age > 120, age := NA]
 
 # Codierung Outcome
 outcome_lookup <- data.frame(
