@@ -58,11 +58,11 @@ ui <- fluidPage(
       mainPanel(
         id = "main-panel",
         tabsetPanel(
-          # tabPanel("Reports per Quarter", plotOutput("reports_per_quarter_plot")),
-          # tabPanel("Reports per Sequence", plotOutput("reports_per_sequence_plot")),
-          # tabPanel("Therapy Duration", plotOutput("therapy_durations_plot")),
-          # tabPanel("Top 10 Indications", plotOutput("top_indications_plot")),
-          # tabPanel("Outcome Distribution", plotOutput("outcome_distribution_plot")),
+          tabPanel("Reports per Quarter", plotOutput("reports_per_quarter_plot")),
+          tabPanel("Reports per Sequence", plotOutput("reports_per_sequence_plot")),
+          tabPanel("Therapy Duration", plotOutput("therapy_durations_plot")),
+          tabPanel("Top 10 Indications", plotOutput("top_indications_plot")),
+          tabPanel("Outcome Distribution", plotOutput("outcome_distribution_plot")),
           tabPanel("Filtered Drug Table", dataTableOutput("filtered_drug_table"))
         )
       )
@@ -81,11 +81,16 @@ server <- function(input, output, session) {
   # session, current interaction link to client from server-side
 
 
-    updateSelectizeInput(session,
-                         inputId = 'drug_select',
-                         select = "IBUPROFEN",
-                         choices = unique_drugs,
-                         server = TRUE)
+  updateSelectizeInput(session,
+                       inputId = 'drug_select',
+                       selected = "",
+                       choices = unique_drugs,
+                       # Handles choices server side, improves performance
+                       server = TRUE, 
+                       options = list(
+                         placeholder = "Select a drug",
+                         maxOptions = 10
+                       ))
   
   # "reactive" expressions store intermediate results, perform calculations and filter data
   # if (filter) value changes, the current expression gets invalidated
@@ -97,11 +102,11 @@ server <- function(input, output, session) {
               v_age_max = input$age_filter[2],
               v_year = input$year_filter)
     
-    print(class(input$drug_select))
-    print(class(input$sex_filter))
-    print(class(input$age_filter[1]))
-    print(class(input$age_filter[2]))
-    print(class(input$year_filter))
+    print(input$drug_select)
+    print(input$sex_filter)
+    print(input$age_filter[1])
+    print(input$age_filter[2])
+    print(input$year_filter)
 
     return(data)
 
@@ -111,55 +116,54 @@ server <- function(input, output, session) {
     final_data()
   })
   
-  # # Render reports per quarter plot
-  # output$reports_per_quarter_plot <- renderPlot({
-  #   data <- final_data()
-  #   reports_per_quarter <- num_reports_per_quarter(data, input$year_filter)
-  #   ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
-  #     geom_bar(stat = "identity") +
-  #     labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports") +
-  #     theme_minimal()
-  # })
-  # 
-  # # Render reports per sequence plot
-  # output$reports_per_sequence_plot <- renderPlot({
-  #   reports_per_sequence <- num_reports_per_sequence(final_data())
-  #   ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
-  #     geom_bar(stat = "identity") +
-  #     labs(title = "Number of Reports per Sequence", x = "Sequence", y = "Number of Reports") +
-  #     theme_minimal()
-  # })
-  # 
-  # # Render therapy duration plot
-  # output$therapy_durations_plot <- renderPlot({
-  #   therapy_durations <- calc_therapy_duration(final_data())
-  #   
-  #   # Create a data frame from the vector of therapy durations
-  #   therapy_df <- data.frame(duration = therapy_durations)
-  #   
-  #   ggplot(therapy_df, aes(x = duration)) +
-  #     geom_histogram(binwidth = 1) +   # You might need to adjust binwidth
-  #     labs(title = "Distribution of Therapy Duration", x = "Duration", y = "Frequency") +
-  #     theme_minimal()
-  # })
-  # 
-  # # Render top 10 indications plot
-  # output$top_indications_plot <- renderPlot({
-  #   top_indications_data <- top_indications(final_data())
-  #   ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
-  #     geom_bar(stat = "identity") +
-  #     labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports") +
-  #     theme_minimal()
-  # })
-  # 
-  # # Render outcome distribution plot
-  # output$outcome_distribution_plot <- renderPlot({
-  #   outcome_distribution_data <- outcome_distribution(final_data())
-  #   ggplot(outcome_distribution_data, aes(x = outcome_decoded, y = N)) +
-  #     geom_bar(stat = "identity") +
-  #     labs(title = "Outcome Distribution", x = "Outcome", y = "Number of Outcomes") +
-  #     theme_minimal()
-  # })
+  # Render reports per quarter plot
+  output$reports_per_quarter_plot <- renderPlot({
+    reports_per_quarter <- num_reports_per_quarter(final_data())
+    ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
+      geom_bar(stat = "identity") +
+      labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports") +
+      theme_minimal()
+  })
+
+  # Render reports per sequence plot
+  output$reports_per_sequence_plot <- renderPlot({
+    reports_per_sequence <- num_reports_per_sequence(final_data())
+    ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
+      geom_bar(stat = "identity") +
+      labs(title = "Number of Reports per Sequence", x = "Sequence", y = "Number of Reports") +
+      theme_minimal()
+  })
+
+  # Render therapy duration plot
+  output$therapy_durations_plot <- renderPlot({
+    therapy_durations <- calc_therapy_duration(final_data())
+
+    # Create a data frame from the vector of therapy durations
+    therapy_df <- data.frame(duration = therapy_durations)
+
+    ggplot(therapy_df, aes(x = duration)) +
+      geom_histogram(binwidth = 1) +   # You might need to adjust binwidth
+      labs(title = "Distribution of Therapy Duration", x = "Duration", y = "Frequency") +
+      theme_minimal()
+  })
+
+  # Render top 10 indications plot
+  output$top_indications_plot <- renderPlot({
+    top_indications_data <- top_indications(final_data())
+    ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
+      geom_bar(stat = "identity") +
+      labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports") +
+      theme_minimal()
+  })
+
+  # Render outcome distribution plot
+  output$outcome_distribution_plot <- renderPlot({
+    outcome_distribution_data <- outcome_distribution(final_data())
+    ggplot(outcome_distribution_data, aes(x = outcome_decoded, y = N)) +
+      geom_bar(stat = "identity") +
+      labs(title = "Outcome Distribution", x = "Outcome", y = "Number of Outcomes") +
+      theme_minimal()
+  })
 }
 
 # -----------------------------------------------------------------------------

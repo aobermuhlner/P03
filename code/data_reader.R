@@ -111,23 +111,26 @@ OUTC[, outcome_decoded := outcome_lookup$MEANING_TEXT[match(outc_cod, outcome_lo
 # Reaction (REAC) reduced to only those which as well occured
 REAC <-REAC[drug_rec_act!=""]
 
+unique_drugs <- unique(DRUG$drugname)
+top_drugs <- DRUG$drugname %>% table %>% sort(decreasing = TRUE) %>% names %>% .[1:5]
+#unique_drugs
+
 ########################################
 
 join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, v_year = NULL) {
 
   v_age_min <- ifelse(is.null(v_age_min), min(DEMO$age, na.rm = TRUE), v_age_min)
   v_age_max <- ifelse(is.null(v_age_max), max(DEMO$age, na.rm = TRUE), v_age_max)
-  print(v_year)
   
   if (is.null(v_drugname) | v_drugname == "") {
     if (is.null(v_year) | v_year == "All") {
-      selected_drug <- unique(DRUG[,
+      selected_drug <- unique(DRUG[drugname %in% top_drugs,
                                    .(primaryid, caseid, drug_seq, drugname, route, year, quarter)])
       print("1")
     } else {
-      selected_drug <- unique(DRUG[year %in% as.numeric(v_year),
+      selected_drug <- unique(DRUG[drugname %in% top_drugs & year %in% as.numeric(v_year),
                                    .(primaryid, caseid, drug_seq, drugname, route, year, quarter)])
-      print(v_year)
+      print("2")
     }
   } else {
     if (is.null(v_year) | v_year == "All") {
@@ -167,11 +170,11 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
   selected_outcomes <- selected_outcomes[selected_outcomes[, .I[which.max(.I)], by = .(primaryid)]$V1]
 
 # Merge all the data tables
-  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x = FALSE)
-  final_data <- merge(final_data, selected_outcomes, by = "primaryid", all.x = FALSE)
-  final_data <- merge(final_data, selected_therapies, by = c("primaryid", "drug_seq", "caseid"), all.x = FALSE)
-  final_data <- merge(final_data, selected_indications, by = c("primaryid", "drug_seq", "caseid"), all.x = FALSE)
-  final_data <- merge(final_data, REAC, by = c("primaryid", "caseid"), all.x = FALSE)
+  final_data <- merge(selected_drug, selected_patients, by = "primaryid", all.x =  ifelse((is.null(v_sex) | v_sex == "All"), TRUE, FALSE))
+  final_data <- merge(final_data, selected_outcomes, by = "primaryid", all.x = TRUE)
+  final_data <- merge(final_data, selected_therapies, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
+  final_data <- merge(final_data, selected_indications, by = c("primaryid", "drug_seq", "caseid"), all.x = TRUE)
+  final_data <- merge(final_data, REAC, by = c("primaryid", "caseid"), all.x = TRUE)
 
   # Ensure only unique rows in the final data
   final_data <- unique(final_data)
@@ -179,23 +182,17 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
   return(final_data)
 }
 
+
 ################################ Testing
-# Run the function
-# final_data <- join_data("HUMIRA", "ALL", 0, 120, v_year = "ALL")
+# # Run the function
+# final_data <- join_data("", "F", 0, 120, v_year = "All")
 #  View(final_data)
-#  
- unique(DEMO$occr_country)
+
+unique(DEMO$occr_country)
  
 ##################################################
 # Aufbereitungen für PLots und Listen
 
-#Liste der Medikamente
-
-#unique_drugs <- unique(DRUG$drugname)
-unique_drugs <- DRUG$drugname %>% table %>% sort(decreasing = TRUE) %>% names %>% .[1:30]
-#unique_drugs
-
-#Liste aller beobachteten Sequenzen an Medikamenten
 
 
 #Funktionen für plots
