@@ -104,14 +104,18 @@ calc_therapy_duration_relative <- function(data, therapy_length) {
 }
 
 top_indications <- function(data){
-  indications <- data[, .N, by = indi_pt] 
+  data <- data[!is.na(indi_pt)]
+  indications <- data[, .N, by = indi_pt]
   top_indications <- indications[order(-N)][1:10]
   return(top_indications)
 }
 
+
 outcome_distribution <- function(data){
+  data <- data[!is.na(outcome_decoded)]
   data_complete_therapy <- data[!is.na(end_dt)] # Assuming 'end_dt' indicates the end of therapy
   outcome_dist <- data_complete_therapy[, .N, by = outcome_decoded]
+  ourcome_dist <- outcome_dist[order(-N)][1:10]
   return(outcome_dist)
 }
 
@@ -154,7 +158,7 @@ plot_prod_ai_distribution <- function(data) {
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     xlab("Drug Combinations") +
     ylab("Count") +
-    ggtitle("Top 10 Drug Combinations in 'prod_ai'")
+    theme_minimal()
   print(p)
 }
 #plot_prod_ai_distribution(final_data)
@@ -165,29 +169,27 @@ plot_prod_ai_distribution <- function(data) {
 # Manufactorer_distribution
 plot_manufactorer_distribution <- function(data) {
   manufactorer_dist <- manufactorer_distribution(data)
-  manufactorer_dist <- manufactorer_dist[order(-N)]  # Order the data.table from highest to lowest count
   p <- ggplot(manufactorer_dist, aes(x = reorder(mfr_sndr, -N), y = N)) +  # Also reorder the x-axis to match
     geom_col() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     xlab("Manufacturer Sender") +
-    ylab("Count") +
-    ggtitle("Outcome Distribution by Top 10 Manufacturer Senders")
-  print(p)
+    ylab("Count")+
+    theme_minimal()
+  print(p) 
 }
 # plot_manufactorer_distribution(final_data)
 
 plot_drug_reaction <- function(data) {
   reaction <- drug_react_distribution(data)
-  reaction <- reaction[order(-N)]  # Order the data.table from highest to lowest count
-  p <- ggplot(reaction, aes(x = drug_rec_act, y = N)) +
+  p <- ggplot(reaction, aes(x = reorder(drug_rec_act, -N), y = N)) +
     geom_col() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     xlab("Drug Reaction") +
-    ylab("Count") +
-    ggtitle("Drug Reaction by Top 10 Reaction")
+    ylab("Count")+
+    theme_minimal()
   print(p)
 }
-plot_drug_reaction(final_data)
+#plot_drug_reaction(final_data)
 
 # # Therapy length
 # therapy_durations <- calc_therapy_duration_relative(final_data, "long term")

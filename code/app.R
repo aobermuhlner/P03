@@ -32,6 +32,7 @@ ui <- fluidPage(
         options = list(
           placeholder = "Select a drug",
           maxOptions = 20
+        , width = 2
         )
       ),
       selectInput(inputId = "sex_filter",
@@ -88,6 +89,7 @@ ui <- fluidPage(
                      
                    )
                  )
+                 , width = 10
         ),
         tabPanel("Data Table",
                  value = "tableTabId",
@@ -144,7 +146,7 @@ server <- function(input, output, session) {
     reports_per_quarter <- num_reports_per_quarter(final_data())
     ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports") +
+      labs(title = "", x = "Quarter", y = "Number of Reports") +
       theme_minimal()
   })
 
@@ -153,7 +155,7 @@ server <- function(input, output, session) {
     reports_per_sequence <- num_reports_per_sequence(final_data())
     ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Number of Reports per Sequence", x = "Sequence", y = "Number of Reports") +
+      labs(title = "", x = "Sequence", y = "Number of Reports") +
       theme_minimal()
   })
 
@@ -166,7 +168,7 @@ server <- function(input, output, session) {
 
     ggplot(therapy_df, aes(x = duration)) +
       geom_histogram(binwidth = 1) +   # You might need to adjust binwidth
-      labs(title = "Distribution of Therapy Duration", x = "Duration", y = "Frequency") +
+      labs(title = "", x = "Duration", y = "Frequency") +
       theme_minimal()
   })
 
@@ -175,16 +177,16 @@ server <- function(input, output, session) {
     top_indications_data <- top_indications(final_data())
     ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports") +
+      labs(title = "", x = "Indication", y = "Number of Reports") +
       theme_minimal()
   })
 
   # Render outcome distribution plot
   output$outcome_distribution_plot <- renderPlot({
     outcome_distribution_data <- outcome_distribution(final_data())
-    ggplot(outcome_distribution_data, aes(x = outcome_decoded, y = N)) +
+    ggplot(outcome_distribution_data, aes(x = reorder(outcome_decoded, -N), y = N)) +
       geom_bar(stat = "identity") +
-      labs(title = "Outcome Distribution", x = "Outcome", y = "Number of Outcomes") +
+      labs(title = "", x = "Outcome", y = "Number of Outcomes") +
       theme_minimal()
   })
   
