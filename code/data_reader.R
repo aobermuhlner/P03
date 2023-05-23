@@ -1,6 +1,7 @@
 library(data.table)
 
 # Loading in
+options(scipen=999)
 
 DRUG <- fread("../../data/processed_data/DRUG.csv")
 DEMO <- fread("../../data/processed_data/DEMO.csv")
@@ -18,9 +19,6 @@ idx <- data.table(drugname = unlist(strsplit(DRUG$drugname, "\\\\")),
 
 join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, v_year = NULL) {
   
-  # if (is.null(v_sex) | v_sex == "All") {
-  #   v_sex <- unique(DEMO$sex)
-  # }
   if (is.null(v_year) | v_year == "All") {
     v_year <- unique(DRUG$year)
   }
@@ -59,7 +57,7 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
 
 ################################ Testing
 # Run the function
-final_data <- join_data("ZYRTEC", "All" ,0 ,120, "All")
+final_data <- join_data("ZANTAC", "All" ,0 ,120, "All")
 #View(final_data)
 
 ##################################################
@@ -149,10 +147,58 @@ drug_react_distribution <- function(data){
 
 # #erstellung plots
 # library(ggplot2)
+plot_reports_per_quarter <- function(data){
+  reports_per_quarter <- num_reports_per_quarter(data)
+  ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
+    geom_bar(stat = "identity") +
+    labs(title = "", x = "Quarter", y = "Number of Reports") +
+    theme_minimal()
+}
+
+plot_reports_per_sequence <- function(data){
+  reports_per_sequence <- num_reports_per_sequence(data)
+  ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
+    geom_bar(stat = "identity") +
+    labs(title = "", x = "Sequence", y = "Number of Reports") +
+    theme_minimal()
+}
+
+plot_therapy_durations <- function(data, therapy_filter){
+  therapy_durations <- calc_therapy_duration_relative(data, therapy_filter)
+  
+  # Create a data frame from the vector of therapy durations
+  therapy_df <- data.frame(duration = therapy_durations)
+  
+  ggplot(therapy_df, aes(x = duration)) +
+    geom_histogram(binwidth = 1) +   # You might need to adjust binwidth
+    labs(title = "", x = "Duration", y = "Frequency") +
+    theme_minimal()
+}
+
+
+plot_top_indications <- function(data){
+  top_indications_data <- top_indications(data)
+  ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
+    geom_bar(stat = "identity") +
+    labs(title = "", x = "Indication", y = "Number of Reports") +
+    theme_minimal()
+  
+}
+
+plot_outcome_distribution <- function(data){
+  outcome_distribution_data <- outcome_distribution(data)
+  ggplot(outcome_distribution_data, aes(x = reorder(outcome_decoded, -N), y = N)) +
+    geom_bar(stat = "identity") +
+    labs(title = "", x = "Outcome", y = "Number of Outcomes") +
+    theme_minimal()
+}
+
 
 # Drug mix by group
 plot_prod_ai_distribution <- function(data) {
   prod_ai_dist <- prod_ai_distribution(data)
+  prod_ai_dist <- na.omit(prod_ai_dist)
+  prod_ai_dist <- prod_ai_dist[prod_ai != "",]
   p <- ggplot(prod_ai_dist, aes(x = reorder(prod_ai, -N), y = N)) +
     geom_col() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -161,14 +207,12 @@ plot_prod_ai_distribution <- function(data) {
     theme_minimal()
   print(p)
 }
-#plot_prod_ai_distribution(final_data)
-
-
-
 
 # Manufactorer_distribution
 plot_manufactorer_distribution <- function(data) {
   manufactorer_dist <- manufactorer_distribution(data)
+  manufactorer_dist <- na.omit(manufactorer_dist)
+  manufactorer_dist <- manufactorer_dist[mfr_sndr != "",]
   p <- ggplot(manufactorer_dist, aes(x = reorder(mfr_sndr, -N), y = N)) +  # Also reorder the x-axis to match
     geom_col() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -177,67 +221,20 @@ plot_manufactorer_distribution <- function(data) {
     theme_minimal()
   print(p) 
 }
-# plot_manufactorer_distribution(final_data)
 
 plot_drug_reaction <- function(data) {
   reaction <- drug_react_distribution(data)
+  reaction <- na.omit(reaction)
+  reaction <- reaction[drug_rec_act != "",]
+  
   p <- ggplot(reaction, aes(x = reorder(drug_rec_act, -N), y = N)) +
     geom_col() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    xlab("Drug Reaction") +
+    xlab("Top 10 Reactions") +
     ylab("Count")+
     theme_minimal()
   print(p)
 }
-#plot_drug_reaction(final_data)
-
-# # Therapy length
-# therapy_durations <- calc_therapy_duration_relative(final_data, "long term")
-# data <- data.frame(duration = therapy_durations)
-# ggplot(data, aes(x=duration)) +
-#   geom_histogram() +
-#   labs(x="Therapy Duration (days)", y="Count", title="Histogram of Therapy Durations") +
-#   theme_minimal()
-
-
-
-# 
-# Plotting number of reports per quarter:
-# reports_per_quarter <- num_reports_per_quarter(final_data)
-# ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
-#   geom_bar(stat = "identity") +
-#   labs(title = "Number of Reports per Quarter", x = "Quarter", y = "Number of Reports")
-
-# #Plotting number of reports per sequence:
-# reports_per_sequence <- num_reports_per_sequence(final_data)
-# ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
-#   geom_bar(stat = "identity") +
-#   labs(title = "Number of Reports per Sequence", x = "Sequence", y = "Number of Reports")
-# 
-#Plotting histogram of therapy duration:
-# therapy_durations <- calc_therapy_duration(final_data)
-# data <- data.frame(duration = therapy_durations)
-#ggplot(data, aes(x=duration)) +
-#  geom_histogram() +
-#  labs(x="Therapy Duration (days)", y="Count", title="Histogram of Therapy Durations") +
-#  theme_minimal()
-
-
-
-
-# #Plotting top 10 indications:
-#top_indications_data <- top_indications(final_data)
-# ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
-#   geom_bar(stat = "identity") +
-#   labs(title = "Top 10 Indications", x = "Indication", y = "Number of Reports")
-# 
-# #Plotting outcome distribution:
-# outcome_distribution_data <- outcome_distribution(final_data)
-# ggplot(outcome_distribution_data, aes(x = outc_cod, y = N)) +
-#   geom_bar(stat = "identity") +
-#   labs(title = "Outcome Distribution", x = "Outcome Code", y = "Number of Outcomes")
-
-# View(hist_data)
 
 
 

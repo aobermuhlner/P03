@@ -3,6 +3,7 @@ library(shinyWidgets)
 library(data.table)
 library(ggplot2)
 library(dplyr)
+library(shinythemes)
 
 source("data_reader.R")
 
@@ -19,6 +20,7 @@ custom_column <- c("primaryid","caseid","drug_seq","drugname","prod_ai", "route"
 # UI
 # -----------------------------------------------------------------------------
 ui <- fluidPage(
+  theme = shinytheme("superhero"),
   titlePanel("Side effects of medicaments"),
   sidebarLayout(
     sidebarPanel(
@@ -137,57 +139,31 @@ server <- function(input, output, session) {
     
   })
   
-  # output$drug_select_message <- renderText({
-  #   "Select drug"
-  # })
+  # Every plot outsourced and handled in data_reader.R
   
   # Render reports per quarter plot
   output$reports_per_quarter_plot <- renderPlot({
-    reports_per_quarter <- num_reports_per_quarter(final_data())
-    ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
-      geom_bar(stat = "identity") +
-      labs(title = "", x = "Quarter", y = "Number of Reports") +
-      theme_minimal()
+    plot_reports_per_quarter(final_data())
   })
 
   # Render reports per sequence plot
   output$reports_per_sequence_plot <- renderPlot({
-    reports_per_sequence <- num_reports_per_sequence(final_data())
-    ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
-      geom_bar(stat = "identity") +
-      labs(title = "", x = "Sequence", y = "Number of Reports") +
-      theme_minimal()
+    plot_reports_per_sequence(final_data())
   })
 
   # Render therapy duration plot
   output$therapy_durations_plot <- renderPlot({
-    therapy_durations <- calc_therapy_duration_relative(final_data(),input$therapy_filter)
-
-    # Create a data frame from the vector of therapy durations
-    therapy_df <- data.frame(duration = therapy_durations)
-
-    ggplot(therapy_df, aes(x = duration)) +
-      geom_histogram(binwidth = 1) +   # You might need to adjust binwidth
-      labs(title = "", x = "Duration", y = "Frequency") +
-      theme_minimal()
+    plot_therapy_durations(final_data(), input$therapy_filter)
   })
 
   # Render top 10 indications plot
   output$top_indications_plot <- renderPlot({
-    top_indications_data <- top_indications(final_data())
-    ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
-      geom_bar(stat = "identity") +
-      labs(title = "", x = "Indication", y = "Number of Reports") +
-      theme_minimal()
+    plot_top_indications(final_data())
   })
 
   # Render outcome distribution plot
   output$outcome_distribution_plot <- renderPlot({
-    outcome_distribution_data <- outcome_distribution(final_data())
-    ggplot(outcome_distribution_data, aes(x = reorder(outcome_decoded, -N), y = N)) +
-      geom_bar(stat = "identity") +
-      labs(title = "", x = "Outcome", y = "Number of Outcomes") +
-      theme_minimal()
+    plot_outcome_distribution(final_data())
   })
   
   # Render outcome drug_reaction_plot
