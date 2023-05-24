@@ -55,5 +55,6 @@ filter_data <- function(data, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, 
   return(filtered_data)
 }
 
+DRUG[DRUG$drugname == 'IBUPROFEN']
 drug <- join_data_drug('IBUPROFEN')
 filter_data(drug, 'All', 0, 120, 'All')
