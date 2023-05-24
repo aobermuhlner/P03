@@ -78,7 +78,6 @@ num_reports_per_sequence <- function(data){
   return(reports)
 }
 
-
 calc_therapy_duration <- function(data) {
   ther_data <- data[!is.na(dur_converted) & dur_converted > 0]
   upper_bound <- quantile(ther_data$dur_converted, 0.90)
