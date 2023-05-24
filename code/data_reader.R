@@ -175,7 +175,7 @@ plot_therapy_durations <- function(data, therapy_filter){
   therapy_df <- data.frame(duration = therapy_durations)
   
   ggplot(therapy_df, aes(x = duration)) +
-    geom_histogram(binwidth = 1) +   # You might need to adjust binwidth
+    geom_histogram() +   # You might need to adjust binwidth
     labs(title = "", x = "Duration", y = "Frequency") +
     theme_minimal()
 }
