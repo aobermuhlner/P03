@@ -21,7 +21,7 @@ custom_column <- c("primaryid","caseid","drug_seq","drugname","prod_ai", "route"
 # -----------------------------------------------------------------------------
 ui <- fluidPage(
   theme = shinytheme("superhero"),
-  titlePanel("Side effects of medicaments"),
+  titlePanel("Adverse Event Reporting"),
   sidebarLayout(
     sidebarPanel(
       selectizeInput(
@@ -71,6 +71,7 @@ ui <- fluidPage(
         )
       )
     ),
+
     mainPanel(
       tabsetPanel(
         id = "tabPanelId",
@@ -80,28 +81,60 @@ ui <- fluidPage(
                    condition = "input.drug_select", # JavaScript syntax
                    tabsetPanel(
                      id = "plots_tab",
-                     tabPanel("Reports per Quarter", plotOutput("reports_per_quarter_plot")),
-                     tabPanel("Reports per Sequence", plotOutput("reports_per_sequence_plot")),
+                     tabPanel("Reports per Quarter",
+                              fluidRow(
+                                column(12, plotOutput("reports_per_quarter_plot"))),
+                              tags$style(".reports-padding { padding-top: 20px; }"),
+                              fluidRow(class = "reports-padding",
+                                column(12, dataTableOutput("reports_per_quarter_data")))),
+                     tabPanel("Reports per Sequence",
+                              fluidRow(
+                                column(12, plotOutput("reports_per_sequence_plot"))),
+                              tags$style(".reports-padding { padding-top: 20px; }"),
+                              fluidRow(class = "reports-padding",
+                                       column(12, dataTableOutput("reports_per_sequence_data")))),
                      tabPanel("Therapy Duration", value="therapy_tab", plotOutput("therapy_durations_plot")),
-                     tabPanel("Top 10 Indications", plotOutput("top_indications_plot")),
-                     tabPanel("Outcome Distribution", plotOutput("outcome_distribution_plot")),
-                     tabPanel("Drug Reaction", plotOutput("drug_reaction_plot")),
-                     tabPanel("Medication mix", plotOutput("medication_mix_plot")),
-                     tabPanel("Top 10 Manufacturers", plotOutput("top_manufacturers_plot"))
+                     tabPanel("Top 10 Indications",
+                              fluidRow(
+                                column(12, plotOutput("top_indications_plot"))),
+                              tags$style(".reports-padding { padding-top: 20px; }"),
+                              fluidRow(class = "reports-padding",
+                                       column(12, dataTableOutput("top_indications_data")))),
+                     tabPanel("Outcome Distribution",
+                              fluidRow(
+                                column(12, plotOutput("outcome_distribution_plot"))),
+                              tags$style(".reports-padding { padding-top: 20px; }"),
+                              fluidRow(class = "reports-padding",
+                                       column(12, dataTableOutput("outcome_distribution_data")))),
+                     tabPanel("Drug Reaction",
+                              fluidRow(
+                                column(12, plotOutput("drug_reaction_plot"))),
+                              tags$style(".reports-padding { padding-top: 20px; }"),
+                              fluidRow(class = "reports-padding",
+                                       column(12, dataTableOutput("drug_reaction_data")))),
+                     tabPanel("Medication mix",
+                              fluidRow(class = "reports-padding",
+                                column(12, dataTableOutput("medication_mix_data")))),
+                     tabPanel("Top 10 Manufacturers",
+                              fluidRow(
+                                column(12, plotOutput("top_manufacturers_plot"))),
+                              tags$style(".reports-padding { padding-top: 20px; }"),
+                              fluidRow(class = "reports-padding",
+                                       column(12, dataTableOutput("top_manufacturers_data")))),
                      
                    )
                  )
                  , width = 10
         ),
-        tabPanel("Data Table",
+
+        tabPanel("Drug Table",
                  value = "tableTabId",
                  tabsetPanel(id="table_tab",
-                 tabPanel("Filtered Drug Table",value="data_table_tab", dataTableOutput("filtered_drug_table")))
+                 tabPanel("Drug Table",value="data_table_tab", dataTableOutput("filtered_drug_table"))))
         )
       )
     )
   )
-)
 
 
 
@@ -140,45 +173,86 @@ server <- function(input, output, session) {
   })
   
   # Every plot outsourced and handled in data_reader.R
-  
+
   # Render reports per quarter plot
   output$reports_per_quarter_plot <- renderPlot({
     plot_reports_per_quarter(final_data())
   })
+  
+  output$reports_per_quarter_data <- renderDataTable({
+    num_reports_per_quarter(final_data())
+  })
+  #----------------------------------------------------------------------
 
   # Render reports per sequence plot
   output$reports_per_sequence_plot <- renderPlot({
     plot_reports_per_sequence(final_data())
   })
+  
+  output$reports_per_sequence_data <- renderDataTable({
+    num_reports_per_sequence(final_data())
+  })
+  
+  #----------------------------------------------------------------------
 
   # Render therapy duration plot
   output$therapy_durations_plot <- renderPlot({
     plot_therapy_durations(final_data(), input$therapy_filter)
   })
+  
+  #----------------------------------------------------------------------
 
   # Render top 10 indications plot
   output$top_indications_plot <- renderPlot({
     plot_top_indications(final_data())
   })
+  
+  output$top_indications_data <- renderDataTable({
+    top_indications(final_data())
+  })
+  
+  #----------------------------------------------------------------------
 
   # Render outcome distribution plot
   output$outcome_distribution_plot <- renderPlot({
     plot_outcome_distribution(final_data())
   })
   
+  output$outcome_distribution_data <- renderDataTable({
+    outcome_distribution(final_data())
+  })
+  
+  #----------------------------------------------------------------------
+  
   # Render outcome drug_reaction_plot
   output$drug_reaction_plot <- renderPlot({
     plot_drug_reaction(final_data())
   })
   
-  # Render outcome Medication mix
-  output$medication_mix_plot <- renderPlot({
-    plot_prod_ai_distribution(final_data())
+  output$drug_reaction_data <- renderDataTable({
+    drug_react_distribution(final_data())
   })
   
+  #----------------------------------------------------------------------
+  
+  # # Render outcome Medication mix
+  # output$medication_mix_plot <- renderPlot({
+  #   plot_prod_ai_distribution(final_data())
+  # })
+  # Render outcome Medication mix as table
+  output$medication_mix_data <- renderDataTable({
+    prod_ai_distribution(final_data())
+  })
+  
+  #----------------------------------------------------------------------
+  
   # Render outcome Medication mix
-  output$ top_manufacturers_plot <- renderPlot({
+  output$top_manufacturers_plot <- renderPlot({
     plot_manufactorer_distribution(final_data())
+  })
+  
+  output$top_manufacturers_data <- renderDataTable({
+    manufactorer_distribution(final_data())
   })
  
 }

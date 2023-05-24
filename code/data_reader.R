@@ -57,9 +57,8 @@ join_data <- function(v_drugname = NULL, v_sex = NULL, v_age_min = NULL, v_age_m
 
 ################################ Testing
 # Run the function
-final_data <- join_data("ZANTAC", "All" ,0 ,120, "All")
+final_data <- join_data("IBUPROFEN", "All" ,0 ,120, "All")
 #View(final_data)
-
 ##################################################
 
 # Aufbereitungen für PLots und Listen
@@ -69,7 +68,7 @@ final_data <- join_data("ZANTAC", "All" ,0 ,120, "All")
 
 #Funktionen für plots
 num_reports_per_quarter <- function(data){
-  reports <- data[, .N, by = quarter]
+  reports <- data[, .N, by = .(year, quarter)]
   return(reports)
 }
 
@@ -120,6 +119,8 @@ outcome_distribution <- function(data){
 manufactorer_distribution <- function(data){
   data_complete_mfr <- data[!is.na(mfr_sndr)]
   manufactorer_dist <- data_complete_mfr[, .N, by = mfr_sndr]
+  manufactorer_dist <- na.omit(manufactorer_dist)
+  manufactorer_dist <- manufactorer_dist[mfr_sndr != "",]
   manufactorer_dist <- manufactorer_dist[order(-N)][1:10]  # Order by count (N) in descending order and take the top 10
   return(manufactorer_dist)
 }
@@ -127,6 +128,8 @@ manufactorer_distribution <- function(data){
 prod_ai_distribution <- function(data){
   data_complete_prod_ai <- data[!is.na(prod_ai)]
   prod_ai_dist <- data_complete_prod_ai[, .N, by = prod_ai]
+  prod_ai_dist <- na.omit(prod_ai_dist)
+  prod_ai_dist <- prod_ai_dist[prod_ai != "",]
   prod_ai_dist <- prod_ai_dist[order(-N)][1:10]  # Order by count (N) in descending order and take the top 10
   return(prod_ai_dist)
 }
@@ -134,31 +137,34 @@ prod_ai_distribution <- function(data){
 drug_react_distribution <- function(data){
   data_complete_drug_reaction <- data[!is.na(drug_rec_act)]
   drug_react <- data_complete_drug_reaction[, .N, by = drug_rec_act]
+  drug_react <- na.omit(drug_react)
+  drug_react <- drug_react[drug_rec_act != "",]
   drug_react <- drug_react[order(-N)][1:10]
   return(drug_react)
 }
 
 
-# library(ggplot2)
+library(ggplot2)
 # 
 # unique(final_data$prod_ai)
 # 
 # prod_ai_distribution(final_data)
 
 # #erstellung plots
-# library(ggplot2)
 plot_reports_per_quarter <- function(data){
   reports_per_quarter <- num_reports_per_quarter(data)
-  ggplot(reports_per_quarter, aes(x = quarter, y = N)) +
+  ggplot(reports_per_quarter, aes(x = as.factor(year), y = N, fill = quarter)) +
     geom_bar(stat = "identity") +
-    labs(title = "", x = "Quarter", y = "Number of Reports") +
-    theme_minimal()
+    labs(title = "", x = "Year", y = "Number of Reports") +
+    theme_minimal() +
+    coord_flip() +
+    geom_text(aes(label = N), position = position_stack(vjust = 0.5))
 }
 
 plot_reports_per_sequence <- function(data){
   reports_per_sequence <- num_reports_per_sequence(data)
   ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity", fill="#2B3E50") +
     labs(title = "", x = "Sequence", y = "Number of Reports") +
     theme_minimal()
 }
@@ -179,29 +185,30 @@ plot_therapy_durations <- function(data, therapy_filter){
 plot_top_indications <- function(data){
   top_indications_data <- top_indications(data)
   ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity", fill="#2B3E50") +
+    scale_x_discrete(guide = guide_axis(n.dodge = 2)) + # Add label order distance
+    geom_text(aes(label = N), vjust = -0.5) +  # Add numbers on top of the bars
     labs(title = "", x = "Indication", y = "Number of Reports") +
     theme_minimal()
-  
 }
+
 
 plot_outcome_distribution <- function(data){
   outcome_distribution_data <- outcome_distribution(data)
   ggplot(outcome_distribution_data, aes(x = reorder(outcome_decoded, -N), y = N)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity", fill="#2B3E50") +
+    scale_x_discrete(guide = guide_axis(n.dodge = 2)) + # Add label order distance
+    geom_text(aes(label = N), vjust = -0.5) +  # Add numbers on top of the bars
     labs(title = "", x = "Outcome", y = "Number of Outcomes") +
     theme_minimal()
 }
 
-
 # Drug mix by group
 plot_prod_ai_distribution <- function(data) {
   prod_ai_dist <- prod_ai_distribution(data)
-  prod_ai_dist <- na.omit(prod_ai_dist)
-  prod_ai_dist <- prod_ai_dist[prod_ai != "",]
   p <- ggplot(prod_ai_dist, aes(x = reorder(prod_ai, -N), y = N)) +
-    geom_col() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    geom_col(fill="#2B3E50") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     xlab("Drug Combinations") +
     ylab("Count") +
     theme_minimal()
@@ -211,12 +218,11 @@ plot_prod_ai_distribution <- function(data) {
 # Manufactorer_distribution
 plot_manufactorer_distribution <- function(data) {
   manufactorer_dist <- manufactorer_distribution(data)
-  manufactorer_dist <- na.omit(manufactorer_dist)
-  manufactorer_dist <- manufactorer_dist[mfr_sndr != "",]
   p <- ggplot(manufactorer_dist, aes(x = reorder(mfr_sndr, -N), y = N)) +  # Also reorder the x-axis to match
-    geom_col() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    xlab("Manufacturer Sender") +
+    geom_col(fill="#2B3E50") +
+    scale_x_discrete(guide = guide_axis(n.dodge = 2)) + # Add label order distance
+    geom_text(aes(label = N), vjust = -0.5) +  # Add numbers on top of the bars
+    xlab("Manufacturer") +
     ylab("Count")+
     theme_minimal()
   print(p) 
@@ -224,17 +230,18 @@ plot_manufactorer_distribution <- function(data) {
 
 plot_drug_reaction <- function(data) {
   reaction <- drug_react_distribution(data)
-  reaction <- na.omit(reaction)
-  reaction <- reaction[drug_rec_act != "",]
-  
   p <- ggplot(reaction, aes(x = reorder(drug_rec_act, -N), y = N)) +
-    geom_col() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    geom_col(fill="#2B3E50") +
+    scale_x_discrete(guide = guide_axis(n.dodge = 2)) + # Add label order distance
+    geom_text(aes(label = N), vjust = -0.5) +  # Add numbers on top of the bars
     xlab("Top 10 Reactions") +
     ylab("Count")+
     theme_minimal()
+  
   print(p)
 }
 
+
+# plot_drug_reaction(final_data)
 
 
