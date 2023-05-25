@@ -21,7 +21,7 @@ join_data_drug <- function(v_drugname = NULL) {
   drug_data <- DRUG[idx[.(v_drugname), unique(rownum)]] |>
     merge(y = THER, by = c("primaryid", "caseid", "drug_seq"), all.x = TRUE) |>
     merge(y = INDI, by = c("primaryid", "caseid", "drug_seq"), all.x = TRUE) |>
-    merge(y = REAC, by = c("primaryid", "caseid"), all.x = TRUE) |>
+    merge(y = REAC, by = c("primaryid"), all.x = TRUE) |>
     merge(y = DEMO, by = "primaryid", all.x = TRUE) |>
     merge(y = OUTC, by = "primaryid", all.x = TRUE) |>
     mutate(caseid = caseid.x) |>
@@ -58,6 +58,8 @@ filter_data <- function(data, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, 
 # Run the function
 final_data <- join_data_drug("IBUPROFEN")
 y <- filter_data(final_data, 'All', 0, 120, 'All', 'All')
+
+
 #View(y)
 ##################################################
 
@@ -73,8 +75,7 @@ num_reports_per_quarter <- function(data){
 }
 
 num_reports_per_sequence <- function(data){
-  reports <- data[drug_seq < 50, .N, by = drug_seq]
-  #reports <- data[, .N, by = drug_seq]
+  reports <- data[, .N, by = drug_seq]
   return(reports)
 }
 
@@ -102,16 +103,12 @@ calc_therapy_duration_relative <- function(data, therapy_length) {
 top_indications <- function(data){
   data <- data[!is.na(indi_pt)]
   indications <- data[, .N, by = indi_pt]
-  top_indications <- indications[order(-N)][1:10]
-  return(top_indications)
+  return(indications)
 }
 
-
 outcome_distribution <- function(data){
-  data <- data[!is.na(outcome_decoded)]
-  data_complete_therapy <- data[!is.na(end_dt)] # Assuming 'end_dt' indicates the end of therapy
-  outcome_dist <- data_complete_therapy[, .N, by = outcome_decoded]
-  ourcome_dist <- outcome_dist[order(-N)][1:10]
+  data <- data[!is.na(outcome_decoded) & !is.na(end_dt)]
+  outcome_dist <- data[, .N, by = outcome_decoded]
   return(outcome_dist)
 }
 
@@ -162,6 +159,7 @@ plot_reports_per_quarter <- function(data){
 
 plot_reports_per_sequence <- function(data){
   reports_per_sequence <- num_reports_per_sequence(data)
+  reports_per_sequence <- dplyr::filter(reports_per_sequence, drug_seq <= 50)
   ggplot(reports_per_sequence, aes(x = factor(drug_seq), y = N)) +
     geom_bar(stat = "identity", fill="#2B3E50") +
     labs(title = "", x = "Sequence", y = "Number of Reports") +
@@ -183,21 +181,22 @@ plot_therapy_durations <- function(data, therapy_filter){
 
 plot_top_indications <- function(data){
   top_indications_data <- top_indications(data)
+  top_indications_data <- top_indications_data[order(top_indications_data$N, decreasing = TRUE),][1:10,]
   ggplot(top_indications_data, aes(x = reorder(indi_pt, -N), y = N)) +
     geom_bar(stat = "identity", fill="#2B3E50") +
     scale_x_discrete(guide = guide_axis(n.dodge = 2)) + # Add label order distance
-    geom_text(aes(label = N), vjust = -0.5) +  # Add numbers on top of the bars
     labs(title = "", x = "Indication", y = "Number of Reports") +
     theme_minimal()
 }
 
 
+
 plot_outcome_distribution <- function(data){
   outcome_distribution_data <- outcome_distribution(data)
+  outcome_distribution_data <- outcome_distribution_data[order(outcome_distribution_data$N, decreasing = TRUE),][1:10,]
   ggplot(outcome_distribution_data, aes(x = reorder(outcome_decoded, -N), y = N)) +
     geom_bar(stat = "identity", fill="#2B3E50") +
     scale_x_discrete(guide = guide_axis(n.dodge = 2)) + # Add label order distance
-    geom_text(aes(label = N), vjust = -0.5) +  # Add numbers on top of the bars
     labs(title = "", x = "Outcome", y = "Number of Outcomes") +
     theme_minimal()
 }
