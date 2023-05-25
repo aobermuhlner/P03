@@ -60,8 +60,6 @@ filter_data <- function(data, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, 
 # Run the function
 final_data <- join_data_drug("IBUPROFEN")
 y <- filter_data(final_data, 'All', 0, 120, 'All', 'All')
-
-
 #View(y)
 ##################################################
 
@@ -139,6 +137,8 @@ drug_react_distribution <- function(data){
 
 # Plots
 
+# plot report per quarter
+
 plot_reports_per_quarter <- function(data){
   reports_per_quarter <- num_reports_per_quarter(data)
   
@@ -158,6 +158,7 @@ plot_reports_per_quarter <- function(data){
     theme(legend.position = "none")
 }
 
+# reports per sequence
 
 plot_reports_per_sequence <- function(data){
   reports_per_sequence <- num_reports_per_sequence(data)
@@ -174,12 +175,22 @@ plot_therapy_durations <- function(data, therapy_filter){
   # Create a data frame from the vector of therapy durations
   therapy_df <- data.frame(duration = therapy_durations)
   
+  bin_width <- switch(therapy_filter,
+                      "Short term" = 1,
+                      "Medium term" = 7,
+                      "Long term" = 365,
+                      "All" = 365)
+  
   ggplot(therapy_df, aes(x = duration)) +
-    geom_histogram( fill="#2B3E50") +   # You might need to adjust binwidth
+    geom_histogram(binwidth = bin_width, fill="#2B3E50") +
     labs(title = "", x = "Duration", y = "Frequency") +
-    theme_minimal()
+    theme_minimal() +
+    scale_x_continuous(breaks = seq(round(min(therapy_df$duration)), round(max(therapy_df$duration)), by = bin_width))
 }
 
+#plot_therapy_durations(final_data, "Medium term")
+
+# plot indications
 
 plot_top_indications <- function(data){
   top_indications_data <- top_indications(data)
@@ -191,7 +202,7 @@ plot_top_indications <- function(data){
     theme_minimal()
 }
 
-
+# Plot outcome distribution
 
 plot_outcome_distribution <- function(data){
   outcome_distribution_data <- outcome_distribution(data)
