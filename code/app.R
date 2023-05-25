@@ -47,6 +47,11 @@ ui <- fluidPage(
                   choices = c("All", "2022", "2023"),
                   selected = "All"
       ),
+      selectInput(inputId = "sequenz_filter",
+                  label = "Filter by sequenz",
+                  choices = c("All", "1", "2", "3"),
+                  selected = "All"
+      ),
       sliderInput(inputId = "age_filter",
                   label = "Filter by age",
                   # TODO: set range to min() max() of demo$age
@@ -154,14 +159,19 @@ server <- function(input, output, session) {
                          maxOptions = 20
                        ))
   
-  final_data <- reactive({
-    data <- join_data(v_drugname = input$drug_select,
-              v_sex = input$sex_filter,
-              v_age_min = input$age_filter[1],
-              v_age_max = input$age_filter[2],
-              v_year = input$year_filter)
+  drug_data <- reactive({
+    data <- join_data_drug(v_drugname = input$drug_select)
     return(data)
-
+  })
+  
+  final_data <- reactive({
+    data <- filter_data(drug_data(),
+                      v_sex = input$sex_filter,
+                      v_age_min = input$age_filter[1],
+                      v_age_max = input$age_filter[2],
+                      v_year = input$year_filter)
+    return(data)
+    
   })
   
   output$filtered_drug_table <- renderDataTable({
