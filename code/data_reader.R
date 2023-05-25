@@ -1,5 +1,6 @@
 library(data.table)
 library(dplyr)
+library(ggplot2)
 
 # Loading in
 options(scipen=999)
@@ -67,11 +68,8 @@ y <- filter_data(final_data, 'All', 0, 120, 'All', 'All')
 # Aufbereitungen für PLots und Listen
 
 # unique_drugs <- DRUG$drugname %>% table %>% sort(decreasing = TRUE) %>% names %>% .[1:10]
-
-
-#Funktionen für plots
 num_reports_per_quarter <- function(data){
-  reports <- data[, .N, by = .(year, quarter)]
+  reports <- data[, .N, by = .(quarter)]
   return(reports)
 }
 
@@ -140,23 +138,27 @@ drug_react_distribution <- function(data){
   return(drug_react)
 }
 
+# Plots
 
-library(ggplot2)
-# 
-# unique(final_data$prod_ai)
-# 
-# prod_ai_distribution(final_data)
-
-# #erstellung plots
 plot_reports_per_quarter <- function(data){
   reports_per_quarter <- num_reports_per_quarter(data)
-  ggplot(reports_per_quarter, aes(x = as.factor(year), y = N, fill = quarter)) +
+  
+  # Calculate relative values
+  total_reports <- sum(reports_per_quarter$N)
+  reports_per_quarter$N_relative <- reports_per_quarter$N / total_reports * 100
+  
+  ggplot(reports_per_quarter, aes(x = "Quartals", y = N_relative, fill = quarter)) +
     geom_bar(stat = "identity") +
-    labs(title = "", x = "Year", y = "Number of Reports") +
+    scale_fill_manual(values = c("#4e5d6c","#2B3E50", "#4e5d6c", "#2B3E50")) +
+    labs(title = "", x = "Quartals", y = "Percentage of Reports") +
     theme_minimal() +
     coord_flip() +
-    geom_text(aes(label = N), position = position_stack(vjust = 0.5))
+    geom_text(aes(label = paste0(quarter, "\n", round(N_relative, 1), "%")), 
+              position = position_stack(vjust = 0.5), 
+              colour = "white") +
+    theme(legend.position = "none")
 }
+
 
 plot_reports_per_sequence <- function(data){
   reports_per_sequence <- num_reports_per_sequence(data)
@@ -174,7 +176,7 @@ plot_therapy_durations <- function(data, therapy_filter){
   therapy_df <- data.frame(duration = therapy_durations)
   
   ggplot(therapy_df, aes(x = duration)) +
-    geom_histogram() +   # You might need to adjust binwidth
+    geom_histogram( fill="#2B3E50") +   # You might need to adjust binwidth
     labs(title = "", x = "Duration", y = "Frequency") +
     theme_minimal()
 }
