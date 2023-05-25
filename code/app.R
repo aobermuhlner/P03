@@ -15,7 +15,7 @@ unique_drugs<- names(drug_freq)[order(drug_freq, decreasing = TRUE)]
 age_min <- min(DEMO$age, na.rm = TRUE)
 age_max <- max(DEMO$age, na.rm = TRUE)
 
-fluidrow_width = 11
+fluidrow_width = 10
 
 # The data frame doesn't exist, so therefore a handmade list is created
 custom_column <- c("primaryid","caseid","drug_seq","drugname","prod_ai", "route","year","quarter","age", "sex","reporter_country","outcome_decoded", "indi_pt", "drug_rec_act")
@@ -26,7 +26,7 @@ ui <- fluidPage(
   titlePanel("Adverse Event Reporting"),
   sidebarLayout(
     sidebarPanel(
-    width = 3,
+    width = 2,
       selectizeInput(
         inputId = "drug_select",
         label = "Select a drug",
@@ -53,8 +53,8 @@ ui <- fluidPage(
       sliderInput(inputId = "sequence_filter",
                   label = "Filter by sequence",
                   min = 1,
-                  max = 49,
-                  value = c(1, 49)
+                  max = 150,
+                  value = c(1, 150)
       ),
       sliderInput(inputId = "age_filter",
                   label = "Filter by age",
@@ -71,7 +71,7 @@ ui <- fluidPage(
         )
       ),
       conditionalPanel(
-        condition = "input.tabPanelId == 'tableTabId' && input.table_tab == 'data_table_tab'", # JavaScript syntax
+        condition = "input.tabPanelId == 'data_table_tab'", # JavaScript syntax
         checkboxGroupInput(inputId = "df_column_filter",
                            label = "Columns in table to show:",
                            choices = custom_column,
@@ -104,7 +104,7 @@ ui <- fluidPage(
                               fluidRow(class = "reports-padding",
                                        column(fluidrow_width, dataTableOutput("reports_per_sequence_data")))),
                      tabPanel("Therapy Duration", value="therapy_tab", plotOutput("therapy_durations_plot")),
-                     tabPanel("Top 10 Indications",
+                     tabPanel("Indications",
                               fluidRow(
                                 column(fluidrow_width, plotOutput("top_indications_plot"))),
                               tags$style(".reports-padding { padding-top: 20px; }"),
@@ -125,7 +125,7 @@ ui <- fluidPage(
                      tabPanel("Medication mix",
                               fluidRow(class = "reports-padding",
                                 column(fluidrow_width, dataTableOutput("medication_mix_data")))),
-                     tabPanel("Top 10 Manufacturers",
+                     tabPanel("Manufacturers",
                               fluidRow(
                                 column(fluidrow_width, plotOutput("top_manufacturers_plot"))),
                               tags$style(".reports-padding { padding-top: 20px; }"),
@@ -135,11 +135,7 @@ ui <- fluidPage(
                    )
                  )
         ),
-        tabPanel("Drug Table",value="data_table_tab", dataTableOutput("filtered_drug_table")),
-        # tabPanel("Drug Table",
-        #          value = "tableTabId",
-        #          tabsetPanel(id="table_tab",
-        #          tabPanel("Drug Table",value="data_table_tab", dataTableOutput("filtered_drug_table"))))
+        tabPanel("Table",value="data_table_tab", dataTableOutput("filtered_drug_table")),
         )
       )
       )
@@ -211,8 +207,17 @@ server <- function(input, output, session) {
         searchable = FALSE,
         targets = "_all"
       )
+      ,
+      list(
+        orderable = TRUE,
+        targets = 0  # Specify the index of the first column
+      ),
+      list(
+        orderable = FALSE,
+        targets = "_all"
+      )
     ),
-    search = list(regex = TRUE)  # Enable regex searching
+    order = list(list(0, "asc"))  # Specify column index (0) and order direction ("asc")
   )
   )
   #----------------------------------------------------------------------
@@ -268,8 +273,17 @@ server <- function(input, output, session) {
         searchable = FALSE,
         targets = "_all"
       )
+      ,
+      list(
+        orderable = TRUE,
+        targets = 1  
+      ),
+      list(
+        orderable = FALSE,
+        targets = "_all"
+      )
     ),
-    search = list(regex = TRUE)  # Enable regex searching
+    order = list(list(1, "desc"))
   )
   )
   #----------------------------------------------------------------------
@@ -289,8 +303,17 @@ server <- function(input, output, session) {
         searchable = FALSE,
         targets = "_all"
       )
+      ,
+      list(
+        orderable = TRUE,
+        targets = 1  
+      ),
+      list(
+        orderable = FALSE,
+        targets = "_all"
+      )
     ),
-    search = list(regex = TRUE)  # Enable regex searching
+    order = list(list(1, "desc"))
   )
   )
   #----------------------------------------------------------------------
@@ -310,17 +333,44 @@ server <- function(input, output, session) {
         searchable = FALSE,
         targets = "_all"
       )
-    )))
+      ,
+      list(
+        orderable = TRUE,
+        targets = 1  
+      ),
+      list(
+        orderable = FALSE,
+        targets = "_all"
+      )
+    ),
+    order = list(list(1, "desc"))
+  )
+  )
   #----------------------------------------------------------------------
-  
-  # # Render outcome Medication mix
-  # output$medication_mix_plot <- renderPlot({
-  #   plot_prod_ai_distribution(final_data())
-  # })
-  # Render outcome Medication mix as table
+
   output$medication_mix_data <- renderDataTable({
     prod_ai_distribution(final_data())
-  })
+  }, options = list(
+    pageLength = 10,
+    searching = TRUE,
+    columnDefs = list(
+      list(
+        searchable = FALSE,
+        targets = "_all"
+      )
+      ,
+      list(
+        orderable = TRUE,
+        targets = 1  
+      ),
+      list(
+        orderable = FALSE,
+        targets = "_all"
+      )
+    ),
+    order = list(list(1, "desc"))
+  )
+  )
   
   #----------------------------------------------------------------------
   
@@ -339,8 +389,17 @@ server <- function(input, output, session) {
         searchable = FALSE,
         targets = "_all"
       )
+      ,
+      list(
+        orderable = TRUE,
+        targets = 1  
+      ),
+      list(
+        orderable = FALSE,
+        targets = "_all"
+      )
     ),
-    search = list(regex = TRUE)  # Enable regex searching
+    order = list(list(1, "desc"))
   )
   )
 }
