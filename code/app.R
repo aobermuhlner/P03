@@ -15,7 +15,7 @@ unique_drugs<- names(drug_freq)[order(drug_freq, decreasing = TRUE)]
 age_min <- min(DEMO$age, na.rm = TRUE)
 age_max <- max(DEMO$age, na.rm = TRUE)
 
-fluidrow_width = 10
+fluidrow_width = 11
 
 # The data frame doesn't exist, so therefore a handmade list is created
 custom_column <- c("primaryid","caseid","drug_seq","drugname","prod_ai", "route","year","quarter","age", "sex","reporter_country","outcome_decoded", "indi_pt", "drug_rec_act")
@@ -26,7 +26,7 @@ ui <- fluidPage(
   titlePanel("Adverse Event Reporting"),
   sidebarLayout(
     sidebarPanel(
-    width = 2,
+    width = 3,
       selectizeInput(
         inputId = "drug_select",
         label = "Select a drug",
@@ -103,7 +103,9 @@ ui <- fluidPage(
                               tags$style(".reports-padding { padding-top: 20px; }"),
                               fluidRow(class = "reports-padding",
                                        column(fluidrow_width, dataTableOutput("reports_per_sequence_data")))),
-                     tabPanel("Therapy Duration", value="therapy_tab", plotOutput("therapy_durations_plot")),
+                     tabPanel("Therapy Duration",
+                              fluidRow(
+                                colummn(fluidrow_width, value="therapy_tab", plotOutput("therapy_durations_plot")))),
                      tabPanel("Indications",
                               fluidRow(
                                 column(fluidrow_width, plotOutput("top_indications_plot"))),
