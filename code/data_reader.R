@@ -116,8 +116,7 @@ manufactorer_distribution <- function(data){
   manufactorer_dist <- data_complete_mfr[, .N, by = mfr_sndr]
   manufactorer_dist <- na.omit(manufactorer_dist)
   manufactorer_dist <- manufactorer_dist[mfr_sndr != "",]
-  manufactorer_dist <- manufactorer_dist[order(-N)][1:10]  # Order by count (N) in descending order and take the top 10
-  return(manufactorer_dist)
+ return(manufactorer_dist)
 }
 
 prod_ai_distribution <- function(data){
@@ -216,13 +215,14 @@ plot_prod_ai_distribution <- function(data) {
   print(p)
 }
 
+
 # Manufactorer_distribution
 plot_manufactorer_distribution <- function(data) {
   manufactorer_dist <- manufactorer_distribution(data)
+  manufactorer_dist <- manufactorer_dist[order(manufactorer_dist$N, decreasing = TRUE),][1:10,]
   p <- ggplot(manufactorer_dist, aes(x = reorder(mfr_sndr, -N), y = N)) +  # Also reorder the x-axis to match
     geom_col(fill="#2B3E50") +
     scale_x_discrete(guide = guide_axis(n.dodge = 2)) + # Add label order distance
-    geom_text(aes(label = N), vjust = -0.5) +  # Add numbers on top of the bars
     xlab("Manufacturer") +
     ylab("Count")+
     theme_minimal()
