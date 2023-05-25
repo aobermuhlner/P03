@@ -85,7 +85,8 @@ OUTC[, outcome_decoded := outcome_lookup$MEANING_TEXT[match(outc_cod, outcome_lo
 
 
 # Reaction (REAC) reduced to only those which as well occured
-REAC <-REAC[drug_rec_act!=""]
+REAC <- REAC[!is.na(REAC$pt)]
+
 
 # Deletes all rows which start with a \ (only 1)
 DRUG <- DRUG[!grepl("^\\\\", drugname)]
@@ -94,7 +95,7 @@ DRUG <- DRUG[!grepl("^\\\\", drugname)]
 OUTC <- OUTC[OUTC[, .I[which.max(.I)], by = .(primaryid)]$V1]
 
 # REAC gefiltert auf nur aktuellsten reaction
-REAC <- REAC[REAC[, .I[which.max(.I)], by = .(primaryid)]$V1]
+REAC <- REAC[REAC[, .I[which.max(.I)], by = .(primaryid, caseid)]$V1]
 
 # Indiator gefiltert auf nur den letzten indicator
 INDI <- INDI[INDI[, .I[which.max(.I)], by = .(primaryid)]$V1]
@@ -106,7 +107,7 @@ DEMO <- DEMO[, .(primaryid, age, sex, wt, reporter_country, mfr_sndr)]
 THER <- THER[, .(primaryid, caseid, drug_seq, dur_converted, start_dt, end_dt)]
 INDI <- INDI[, .(primaryid, caseid, drug_seq, indi_pt)]
 OUTC <- OUTC[, .(primaryid, caseid, outc_cod, outcome_decoded)]
-REAC <- REAC[, .(primaryid, pt, drug_rec_act)]
+REAC <- REAC[, .(primaryid, caseid, pt, drug_rec_act)]
 
 
 fwrite(DRUG, "../../data/processed_data/DRUG.csv")
