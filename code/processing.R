@@ -90,11 +90,14 @@ REAC <-REAC[drug_rec_act!=""]
 # Deletes all rows which start with a \ (only 1)
 DRUG <- DRUG[!grepl("^\\\\", drugname)]
 
-#OUTC gefiltert auf nur aktuellsten outcome
+# OUTC gefiltert auf nur aktuellsten outcome
 OUTC <- OUTC[OUTC[, .I[which.max(.I)], by = .(primaryid)]$V1]
 
-#REAC gefiltert auf nur aktuellsten reaction
-REAC <- REAC[OUTC[, .I[which.max(.I)], by = .(primaryid)]$V1]
+# REAC gefiltert auf nur aktuellsten reaction
+REAC <- REAC[REAC[, .I[which.max(.I)], by = .(primaryid)]$V1]
+
+# Indiator gefiltert auf nur den letzten indicator
+INDI <- INDI[INDI[, .I[which.max(.I)], by = .(primaryid)]$V1]
 
 
 # select only needed columns
