@@ -1,22 +1,16 @@
 library(data.table)
+library(dplyr)
 
 # Loading in
 options(scipen=999)
 
-DRUG <- fread("../../data/processed_data/DRUG.csv")
-DEMO <- fread("../../data/processed_data/DEMO.csv")
-THER <- fread("../../data/processed_data/THER.csv")
-INDI <- fread("../../data/processed_data/INDI.csv")
-OUTC <- fread("../../data/processed_data/OUTC.csv")
-REAC <- fread("../../data/processed_data/REAC.csv")
-
 data_vec <- list(
-  "DRUG" = DRUG,
-  "DEMO" = DEMO,
-  "THER" = THER,
-  "INDI" = INDI,
-  "OUTC" = OUTC,
-  "REAC" = REAC
+  "DRUG" <- fread("../../data/processed_data/DRUG.csv"),
+  "DEMO" <- fread("../../data/processed_data/DEMO.csv"),
+  "THER" <- fread("../../data/processed_data/THER.csv"),
+  "INDI" <- fread("../../data/processed_data/INDI.csv"), 
+  "OUTC" <- fread("../../data/processed_data/OUTC.csv"),
+  "REAC" <- fread("../../data/processed_data/REAC.csv")
 )
 
 idx <- data.table(drugname = unlist(strsplit(DRUG$drugname, "\\\\")),
