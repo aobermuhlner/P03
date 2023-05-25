@@ -90,13 +90,20 @@ REAC <-REAC[drug_rec_act!=""]
 # Deletes all rows which start with a \ (only 1)
 DRUG <- DRUG[!grepl("^\\\\", drugname)]
 
+#OUTC gefiltert auf nur aktuellsten outcome
+OUTC <- OUTC[OUTC[, .I[which.max(.I)], by = .(primaryid)]$V1]
+
+#REAC gefiltert auf nur aktuellsten reaction
+REAC <- REAC[OUTC[, .I[which.max(.I)], by = .(primaryid)]$V1]
+
+
 # select only needed columns
 DRUG <- DRUG[, .(primaryid, caseid, drug_seq, drugname, prod_ai, route, year, quarter)]
 DEMO <- DEMO[, .(primaryid, age, sex, wt, reporter_country, mfr_sndr)]
 THER <- THER[, .(primaryid, caseid, drug_seq, dur_converted, start_dt, end_dt)]
 INDI <- INDI[, .(primaryid, caseid, drug_seq, indi_pt)]
 OUTC <- OUTC[, .(primaryid, caseid, outc_cod, outcome_decoded)]
-REAC <- REAC[, .(primaryid, caseid,pt, drug_rec_act)]
+REAC <- REAC[, .(primaryid, pt, drug_rec_act)]
 
 
 fwrite(DRUG, "../../data/processed_data/DRUG.csv")
