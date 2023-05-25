@@ -66,7 +66,6 @@ filter_data <- function(data, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, 
 # Run the function
 final_data <- join_data_drug("IBUPROFEN")
 y <- filter_data(final_data, 'All', 0, 120, 'All', 'All')
-View(y)
 #View(final_data)
 ##################################################
 
