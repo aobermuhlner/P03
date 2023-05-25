@@ -4,14 +4,12 @@ library(dplyr)
 # Loading in
 options(scipen=999)
 
-data_vec <- list(
-  "DRUG" <- fread("../../data/processed_data/DRUG.csv"),
-  "DEMO" <- fread("../../data/processed_data/DEMO.csv"),
-  "THER" <- fread("../../data/processed_data/THER.csv"),
-  "INDI" <- fread("../../data/processed_data/INDI.csv"), 
-  "OUTC" <- fread("../../data/processed_data/OUTC.csv"),
-  "REAC" <- fread("../../data/processed_data/REAC.csv")
-)
+DRUG <- fread("../../data/processed_data/DRUG.csv")
+DEMO <- fread("../../data/processed_data/DEMO.csv")
+THER <- fread("../../data/processed_data/THER.csv")
+INDI <- fread("../../data/processed_data/INDI.csv")
+OUTC <- fread("../../data/processed_data/OUTC.csv")
+REAC <- fread("../../data/processed_data/REAC.csv")
 
 idx <- data.table(drugname = unlist(strsplit(DRUG$drugname, "\\\\")),
                   rownum = rep(1:nrow(DRUG), times = lengths(strsplit(DRUG$drugname, "\\\\"))),
@@ -20,12 +18,12 @@ idx <- data.table(drugname = unlist(strsplit(DRUG$drugname, "\\\\")),
 join_data_drug <- function(v_drugname = NULL) {
   
   # Merge all the data tables
-  drug_data <- data_vec[["DRUG"]][idx[.(v_drugname), unique(rownum)]] |>
-    merge(y = data_vec[["THER"]], by = c("primaryid", "caseid", "drug_seq"), all.x = TRUE) |>
-    merge(y = data_vec[["INDI"]], by = c("primaryid", "caseid", "drug_seq"), all.x = TRUE) |>
-    merge(y = data_vec[["REAC"]], by = c("primaryid", "caseid"), all.x = TRUE) |>
-    merge(y = data_vec[["DEMO"]], by = "primaryid", all.x = TRUE) |>
-    merge(y = data_vec[["OUTC"]], by = "primaryid", all.x = TRUE) |>
+  drug_data <- DRUG[idx[.(v_drugname), unique(rownum)]] |>
+    merge(y = THER, by = c("primaryid", "caseid", "drug_seq"), all.x = TRUE) |>
+    merge(y = INDI, by = c("primaryid", "caseid", "drug_seq"), all.x = TRUE) |>
+    merge(y = REAC, by = c("primaryid", "caseid"), all.x = TRUE) |>
+    merge(y = DEMO, by = "primaryid", all.x = TRUE) |>
+    merge(y = OUTC, by = "primaryid", all.x = TRUE) |>
     mutate(caseid = caseid.x) |>
     select(-c(caseid.x , caseid.y)) |>
     unique()
@@ -56,11 +54,11 @@ filter_data <- function(data, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, 
 }
 
 
-################################ Testing
+########################################## Testing
 # Run the function
 final_data <- join_data_drug("IBUPROFEN")
 y <- filter_data(final_data, 'All', 0, 120, 'All', 'All')
-#View(final_data)
+#View(y)
 ##################################################
 
 # Aufbereitungen für PLots und Listen
