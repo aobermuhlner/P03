@@ -15,6 +15,8 @@ unique_drugs<- names(drug_freq)[order(drug_freq, decreasing = TRUE)]
 age_min <- min(DEMO$age, na.rm = TRUE)
 age_max <- max(DEMO$age, na.rm = TRUE)
 
+fluidrow_width = 11
+
 # The data frame doesn't exist, so therefore a handmade list is created
 custom_column <- c("primaryid","caseid","drug_seq","drugname","prod_ai", "route","year","quarter","age", "sex","reporter_country","outcome_decoded", "indi_pt", "drug_rec_act")
 # UI
@@ -24,16 +26,17 @@ ui <- fluidPage(
   titlePanel("Adverse Event Reporting"),
   sidebarLayout(
     sidebarPanel(
+    width = 3,
       selectizeInput(
         inputId = "drug_select",
         label = "Select a drug",
         choices = NULL, # keep NULL, gets updated in server-side
-        multiple = FALSE,  # TODO: make multiple choice compatible
+        multiple = FALSE, 
         selected = NULL,
         # custom change in options
         options = list(
           placeholder = "Select a drug",
-          maxOptions = 20
+          maxOptions = 10
         , width = 2
         )
       ),
@@ -47,14 +50,14 @@ ui <- fluidPage(
                   choices = c("All", "2022", "2023"),
                   selected = "All"
       ),
-      selectInput(inputId = "sequenz_filter",
-                  label = "Filter by sequenz",
-                  choices = c("All", "1", "2", "3"),
-                  selected = "All"
+      sliderInput(inputId = "sequence_filter",
+                  label = "Filter by sequence",
+                  min = 1,
+                  max = 49,
+                  value = c(1, 49)
       ),
       sliderInput(inputId = "age_filter",
                   label = "Filter by age",
-                  # TODO: set range to min() max() of demo$age
                   min = age_min,
                   max = age_max,
                   value = c(age_min, age_max)
@@ -78,7 +81,9 @@ ui <- fluidPage(
     ),
 
     mainPanel(
+      width = 9,
       tabsetPanel(
+        
         id = "tabPanelId",
         tabPanel("Plots",
                  value = "plotTabId",
@@ -88,58 +93,57 @@ ui <- fluidPage(
                      id = "plots_tab",
                      tabPanel("Reports per Quarter",
                               fluidRow(
-                                column(12, plotOutput("reports_per_quarter_plot"))),
+                                column(fluidrow_width, plotOutput("reports_per_quarter_plot"))),
                               tags$style(".reports-padding { padding-top: 20px; }"),
                               fluidRow(class = "reports-padding",
-                                column(12, dataTableOutput("reports_per_quarter_data")))),
+                                column(fluidrow_width, dataTableOutput("reports_per_quarter_data")))),
                      tabPanel("Reports per Sequence",
                               fluidRow(
-                                column(12, plotOutput("reports_per_sequence_plot"))),
+                                column(fluidrow_width, plotOutput("reports_per_sequence_plot"))),
                               tags$style(".reports-padding { padding-top: 20px; }"),
                               fluidRow(class = "reports-padding",
-                                       column(12, dataTableOutput("reports_per_sequence_data")))),
+                                       column(fluidrow_width, dataTableOutput("reports_per_sequence_data")))),
                      tabPanel("Therapy Duration", value="therapy_tab", plotOutput("therapy_durations_plot")),
                      tabPanel("Top 10 Indications",
                               fluidRow(
-                                column(12, plotOutput("top_indications_plot"))),
+                                column(fluidrow_width, plotOutput("top_indications_plot"))),
                               tags$style(".reports-padding { padding-top: 20px; }"),
                               fluidRow(class = "reports-padding",
-                                       column(12, dataTableOutput("top_indications_data")))),
+                                       column(fluidrow_width, dataTableOutput("top_indications_data")))),
                      tabPanel("Outcome Distribution",
                               fluidRow(
-                                column(12, plotOutput("outcome_distribution_plot"))),
+                                column(fluidrow_width, plotOutput("outcome_distribution_plot"))),
                               tags$style(".reports-padding { padding-top: 20px; }"),
                               fluidRow(class = "reports-padding",
-                                       column(12, dataTableOutput("outcome_distribution_data")))),
+                                       column(fluidrow_width, dataTableOutput("outcome_distribution_data")))),
                      tabPanel("Drug Reaction",
                               fluidRow(
-                                column(12, plotOutput("drug_reaction_plot"))),
+                                column(fluidrow_width, plotOutput("drug_reaction_plot"))),
                               tags$style(".reports-padding { padding-top: 20px; }"),
                               fluidRow(class = "reports-padding",
-                                       column(12, dataTableOutput("drug_reaction_data")))),
+                                       column(fluidrow_width, dataTableOutput("drug_reaction_data")))),
                      tabPanel("Medication mix",
                               fluidRow(class = "reports-padding",
-                                column(12, dataTableOutput("medication_mix_data")))),
+                                column(fluidrow_width, dataTableOutput("medication_mix_data")))),
                      tabPanel("Top 10 Manufacturers",
                               fluidRow(
-                                column(12, plotOutput("top_manufacturers_plot"))),
+                                column(fluidrow_width, plotOutput("top_manufacturers_plot"))),
                               tags$style(".reports-padding { padding-top: 20px; }"),
                               fluidRow(class = "reports-padding",
-                                       column(12, dataTableOutput("top_manufacturers_data")))),
+                                       column(fluidrow_width, dataTableOutput("top_manufacturers_data")))),
                      
                    )
                  )
-                 , width = 10
         ),
-
-        tabPanel("Drug Table",
-                 value = "tableTabId",
-                 tabsetPanel(id="table_tab",
-                 tabPanel("Drug Table",value="data_table_tab", dataTableOutput("filtered_drug_table"))))
+        tabPanel("Drug Table",value="data_table_tab", dataTableOutput("filtered_drug_table")),
+        # tabPanel("Drug Table",
+        #          value = "tableTabId",
+        #          tabsetPanel(id="table_tab",
+        #          tabPanel("Drug Table",value="data_table_tab", dataTableOutput("filtered_drug_table"))))
         )
       )
+      )
     )
-  )
 
 # -----------------------------------------------------------------------------
 # SERVER-SIDE
@@ -154,7 +158,7 @@ server <- function(input, output, session) {
                        server = TRUE, 
                        options = list(
                          placeholder = "Select a drug",
-                         maxOptions = 20
+                         maxOptions = 10
                        ))
   
   drug_data <- reactive({
@@ -168,7 +172,9 @@ server <- function(input, output, session) {
                       v_age_min = input$age_filter[1],
                       v_age_max = input$age_filter[2],
                       v_year = input$year_filter,
-                      v_sequenz = input$sequenz_filter)
+                      v_sequence_min = input$sequence_filter[1],
+                      v_sequence_max = input$sequence_filter[2])
+    
     return(data)
     
   })
@@ -179,8 +185,15 @@ server <- function(input, output, session) {
       select(input$df_column_filter)
     return(new_df)
     
-  })
-  
+  }, options = list(
+    pageLength = 10,
+    searching = TRUE,
+    columnDefs = list(
+      list(
+        searchable = FALSE,
+        targets = "_all"
+      )
+    )))
   # Every plot outsourced and handled in data_reader.R
 
   # Render reports per quarter plot
@@ -190,7 +203,18 @@ server <- function(input, output, session) {
   
   output$reports_per_quarter_data <- renderDataTable({
     num_reports_per_quarter(final_data())
-  })
+  }, options = list(
+    searching = TRUE,
+    pageLength = 10,
+    columnDefs = list(
+      list(
+        searchable = FALSE,
+        targets = "_all"
+      )
+    ),
+    search = list(regex = TRUE)  # Enable regex searching
+  )
+  )
   #----------------------------------------------------------------------
 
   # Render reports per sequence plot
@@ -200,8 +224,26 @@ server <- function(input, output, session) {
   
   output$reports_per_sequence_data <- renderDataTable({
     num_reports_per_sequence(final_data())
-  })
-  
+  }, options = list(
+      searching = TRUE,
+      pageLength = 10,
+      columnDefs = list(
+        list(
+          searchable = FALSE,
+          targets = "_all"
+        ),
+        list(
+          orderable = TRUE,
+          targets = 0  # Specify the index of the first column
+        ),
+        list(
+          orderable = FALSE,
+          targets = "_all"
+        )
+      ),
+      order = list(list(0, "asc"))  # Specify column index (0) and order direction ("asc")
+  )
+  )
   #----------------------------------------------------------------------
 
   # Render therapy duration plot
@@ -218,8 +260,18 @@ server <- function(input, output, session) {
   
   output$top_indications_data <- renderDataTable({
     top_indications(final_data())
-  })
-  
+  }, options = list(
+    searching = TRUE,
+    pageLength = 10,
+    columnDefs = list(
+      list(
+        searchable = FALSE,
+        targets = "_all"
+      )
+    ),
+    search = list(regex = TRUE)  # Enable regex searching
+  )
+  )
   #----------------------------------------------------------------------
 
   # Render outcome distribution plot
@@ -229,8 +281,18 @@ server <- function(input, output, session) {
   
   output$outcome_distribution_data <- renderDataTable({
     outcome_distribution(final_data())
-  })
-  
+  }, options = list(
+    searching = TRUE,
+    pageLength = 10,
+    columnDefs = list(
+      list(
+        searchable = FALSE,
+        targets = "_all"
+      )
+    ),
+    search = list(regex = TRUE)  # Enable regex searching
+  )
+  )
   #----------------------------------------------------------------------
   
   # Render outcome drug_reaction_plot
@@ -240,8 +302,15 @@ server <- function(input, output, session) {
   
   output$drug_reaction_data <- renderDataTable({
     drug_react_distribution(final_data())
-  })
-  
+  }, options = list(
+    pageLength = 10,
+    searching = TRUE,
+    columnDefs = list(
+      list(
+        searchable = FALSE,
+        targets = "_all"
+      )
+    )))
   #----------------------------------------------------------------------
   
   # # Render outcome Medication mix
@@ -262,8 +331,18 @@ server <- function(input, output, session) {
   
   output$top_manufacturers_data <- renderDataTable({
     manufactorer_distribution(final_data())
-  })
- 
+  }, options = list(
+    searching = TRUE,
+    pageLength = 10,
+    columnDefs = list(
+      list(
+        searchable = FALSE,
+        targets = "_all"
+      )
+    ),
+    search = list(regex = TRUE)  # Enable regex searching
+  )
+  )
 }
 
 # -----------------------------------------------------------------------------
