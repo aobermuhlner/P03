@@ -141,8 +141,6 @@ ui <- fluidPage(
     )
   )
 
-
-
 # -----------------------------------------------------------------------------
 # SERVER-SIDE
 # -----------------------------------------------------------------------------
@@ -169,7 +167,8 @@ server <- function(input, output, session) {
                       v_sex = input$sex_filter,
                       v_age_min = input$age_filter[1],
                       v_age_max = input$age_filter[2],
-                      v_year = input$year_filter)
+                      v_year = input$year_filter,
+                      v_sequenz = input$sequenz_filter)
     return(data)
     
   })

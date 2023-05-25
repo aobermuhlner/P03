@@ -32,6 +32,8 @@ join_data_drug <- function(v_drugname = NULL) {
     merge(y = data_vec[["REAC"]], by = c("primaryid", "caseid"), all.x = TRUE) |>
     merge(y = data_vec[["DEMO"]], by = "primaryid", all.x = TRUE) |>
     merge(y = data_vec[["OUTC"]], by = "primaryid", all.x = TRUE) |>
+    mutate(caseid = caseid.x) |>
+    select(-c(caseid.x , caseid.y)) |>
     unique()
   
   # nur benötigte Spalten Selectieren 
@@ -62,7 +64,9 @@ filter_data <- function(data, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, 
 
 ################################ Testing
 # Run the function
-#final_data <- join_data("IBUPROFEN", "All" ,0 ,120, "All")
+final_data <- join_data_drug("IBUPROFEN")
+y <- filter_data(final_data, 'All', 0, 120, 'All', 'All')
+View(y)
 #View(final_data)
 ##################################################
 
