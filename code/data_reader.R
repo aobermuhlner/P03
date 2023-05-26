@@ -128,7 +128,6 @@ drug_react_distribution <- function(data){
   return(drug_react)
 }
 
-drug_react_distribution(final_data)
 
 
 # Plots
@@ -177,12 +176,11 @@ plot_therapy_durations <- function(data, therapy_filter){
   
   ggplot(therapy_df, aes(x = duration)) +
     geom_histogram(binwidth = bin_width, fill="#2B3E50") +
-    labs(title = "", x = "Duration", y = "Frequency") +
+    labs(title = "", x = "Days", y = "Frequency") +
     theme_minimal() +
     scale_x_continuous(breaks = seq(round(min(therapy_df$duration)), round(max(therapy_df$duration)), by = bin_width))
 }
 
-plot_therapy_durations(final_data, "Medium term")
 
 # plot indications
 
