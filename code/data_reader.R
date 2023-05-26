@@ -80,7 +80,6 @@ num_reports_per_sequence <- function(data){
 # Function Therapy
 calc_therapy_duration_relative <- function(data, therapy_length) {
   ther_data <- data[!is.na(dur_converted) & dur_converted > 0]
-  print(therapy_length)
   if (therapy_length == "Short term") {
     ther_data <- ther_data[dur_converted <= 30]
   } else if (therapy_length == "Medium term") {

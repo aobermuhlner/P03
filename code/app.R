@@ -165,29 +165,15 @@ server <- function(input, output, session) {
                          placeholder = "Select a drug",
                          maxOptions = 10
                        ))
-  
-  # Funktion zum Aktualisieren des Sequenzfilters basierend auf der Datentabelle
-  updateSequenceFilter <- function(data) {
-    # Ermitteln der minimalen und maximalen Sequenzwerte in der Tabelle
-    min_sequence <- min(data$drug_seq)
-    max_sequence <- max(data$drug_seq)
-    
-    # Aktualisieren des Sequenzfilters
-    updateSliderInput(session, "sequence_filter",
-                      label = "Filter by sequence",
-                      min = min_sequence,
-                      max = max_sequence,
-                      value = c(min_sequence, max_sequence))
-  }
-  
-  # Updates Data Table
+
+  # Filter Data Table by Medicament Name
   drug_data <- reactive({
     data <- join_data_drug(v_drugname = input$drug_select)
-    # updateSequenceFilter(data)
     return(data)
   })
   
-  filter_data <- reactive({
+  # Filter by custom Filters
+  filtered_data <- reactive({
     data <- filter_data(drug_data(),
                       v_sex = input$sex_filter,
                       v_age_min = input$age_filter[1],
@@ -202,30 +188,32 @@ server <- function(input, output, session) {
     
   })
   
+  # Output data table
   output$filtered_drug_table <- renderDataTable({
-    data <- filter_data()
+    data <- filtered_data()
     new_df <- data %>%
       select(input$df_column_filter)
     return(new_df)
     
   }, options = list(
-    pageLength = 10,
-    searching = TRUE,
+    pageLength = 10, # Only show 10 (custom start)
+    searching = TRUE, # Global search
     columnDefs = list(
       list(
-        searchable = FALSE,
-        targets = "_all"
+        searchable = FALSE, # Deactivate Column searchbar
+        targets = "_all" # Choose which column searchbar
       )
     )))
+  
   # Every plot outsourced and handled in data_reader.R
 
   # Render reports per quarter plot
   output$reports_per_quarter_plot <- renderPlot({
-    plot_reports_per_quarter(filter_data())
+    plot_reports_per_quarter(filtered_data())
   })
   
   output$reports_per_quarter_data <- renderDataTable({
-    num_reports_per_quarter(filter_data())
+    num_reports_per_quarter(filtered_data())
   }, options = list(
     searching = TRUE,
     pageLength = 10,
@@ -237,25 +225,25 @@ server <- function(input, output, session) {
       ,
       list(
         orderable = TRUE,
-        targets = 0  # Specify the index of the first column
+        targets = 0 
       ),
       list(
         orderable = FALSE,
         targets = "_all"
       )
     ),
-    order = list(list(0, "asc"))  # Specify column index (0) and order direction ("asc")
+    order = list(list(0, "asc")) 
   )
   )
   #----------------------------------------------------------------------
 
   # Render reports per sequence plot
   output$reports_per_sequence_plot <- renderPlot({
-    plot_reports_per_sequence(filter_data())
+    plot_reports_per_sequence(filtered_data())
   })
   
   output$reports_per_sequence_data <- renderDataTable({
-    num_reports_per_sequence(filter_data(), input$sequence_filter[1], input$sequence_filter[2])
+    num_reports_per_sequence(filtered_data())
   }, options = list(
       searching = TRUE,
       pageLength = 10,
@@ -266,32 +254,32 @@ server <- function(input, output, session) {
         ),
         list(
           orderable = TRUE,
-          targets = 0  # Specify the index of the first column
+          targets = 0  
         ),
         list(
           orderable = FALSE,
           targets = "_all"
         )
       ),
-      order = list(list(0, "asc"))  # Specify column index (0) and order direction ("asc")
+      order = list(list(0, "asc"))  
   )
   )
   #----------------------------------------------------------------------
 
   # Render therapy duration plot
   output$therapy_durations_plot <- renderPlot({
-    plot_therapy_durations(filter_data(), input$therapy_filter)
+    plot_therapy_durations(filtered_data(), input$therapy_filter)
   })
   
   #----------------------------------------------------------------------
 
   # Render top 10 indications plot
   output$top_indications_plot <- renderPlot({
-    plot_top_indications(filter_data())
+    plot_top_indications(filtered_data())
   })
   
   output$top_indications_data <- renderDataTable({
-    top_indications(filter_data())
+    top_indications(filtered_data())
   }, options = list(
     searching = TRUE,
     pageLength = 10,
@@ -317,11 +305,11 @@ server <- function(input, output, session) {
 
   # Render outcome distribution plot
   output$outcome_distribution_plot <- renderPlot({
-    plot_outcome_distribution(filter_data())
+    plot_outcome_distribution(filtered_data())
   })
   
   output$outcome_distribution_data <- renderDataTable({
-    outcome_distribution(filter_data())
+    outcome_distribution(filtered_data())
   }, options = list(
     searching = TRUE,
     pageLength = 10,
@@ -347,11 +335,11 @@ server <- function(input, output, session) {
   
   # Render outcome drug_reaction_plot
   output$drug_reaction_plot <- renderPlot({
-    plot_drug_reaction(filter_data())
+    plot_drug_reaction(filtered_data())
   })
   
   output$drug_reaction_data <- renderDataTable({
-    drug_react_distribution(filter_data())
+    drug_react_distribution(filtered_data())
   }, options = list(
     pageLength = 10,
     searching = TRUE,
@@ -376,7 +364,7 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------
 
   output$medication_mix_data <- renderDataTable({
-    prod_ai_distribution(filter_data())
+    prod_ai_distribution(filtered_data())
   }, options = list(
     pageLength = 10,
     searching = TRUE,
@@ -403,11 +391,11 @@ server <- function(input, output, session) {
   
   # Render outcome Medication mix
   output$top_manufacturers_plot <- renderPlot({
-    plot_manufactorer_distribution(filter_data())
+    plot_manufactorer_distribution(filtered_data())
   })
   
   output$top_manufacturers_data <- renderDataTable({
-    manufactorer_distribution(filter_data())
+    manufactorer_distribution(filtered_data())
   }, options = list(
     searching = TRUE,
     pageLength = 10,
