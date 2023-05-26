@@ -105,7 +105,7 @@ ui <- fluidPage(
                                        column(fluidrow_width, dataTableOutput("reports_per_sequence_data")))),
                      tabPanel("Therapy Duration",
                               fluidRow(
-                                colummn(fluidrow_width, value="therapy_tab", plotOutput("therapy_durations_plot")))),
+                                column(fluidrow_width, value="therapy_tab", plotOutput("therapy_durations_plot")))),
                      tabPanel("Indications",
                               fluidRow(
                                 column(fluidrow_width, plotOutput("top_indications_plot"))),

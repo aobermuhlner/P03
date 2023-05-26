@@ -58,8 +58,8 @@ filter_data <- function(data, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, 
 
 ########################################## Testing
 # Run the function
-final_data <- join_data_drug("IBUPROFEN")
-y <- filter_data(final_data, 'All', 0, 120, 'All', 'All')
+#final_data <- join_data_drug("IBUPROFEN")
+#y <- filter_data(final_data, 'All', 0, 120, 'All', 'All')
 #View(y)
 ##################################################
 
@@ -88,7 +88,6 @@ calc_therapy_duration_relative <- function(data, therapy_length) {
   } else if (therapy_length == "Long term") {
     ther_data <- ther_data[dur_converted > 365]
   } 
-  
   return(ther_data$dur_converted)
 }
 
@@ -155,7 +154,6 @@ plot_reports_per_quarter <- function(data){
 
 # reports per sequence
 
-
 # Plot Reports per sequence
 plot_reports_per_sequence <- function(data){
   reports_per_sequence <- num_reports_per_sequence(data)
@@ -184,7 +182,7 @@ plot_therapy_durations <- function(data, therapy_filter){
     scale_x_continuous(breaks = seq(round(min(therapy_df$duration)), round(max(therapy_df$duration)), by = bin_width))
 }
 
-#plot_therapy_durations(final_data, "Medium term")
+plot_therapy_durations(final_data, "Medium term")
 
 # plot indications
 
@@ -255,11 +253,3 @@ plot_drug_reaction <- function(data) {
   
   print(p)
 }
-
-table(final_data$pt)
-table(final_data$pt)
-
-
- plot_drug_reaction(final_data)
-
-
