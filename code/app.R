@@ -26,7 +26,7 @@ ui <- fluidPage(
   titlePanel("Adverse Event Reporting"),
   sidebarLayout(
     sidebarPanel(
-    width = 3,
+    width = 3, # Changes SidePanel width
       selectizeInput(
         inputId = "drug_select",
         label = "Select a drug",
@@ -40,36 +40,42 @@ ui <- fluidPage(
         , width = 2
         )
       ),
+      # Filter by Gender
       selectInput(inputId = "sex_filter",
                   label = "Filter by sex",
                   choices = c("All", "Male" = "M", "Female" = "F"),
                   selected = "All"
       ),
+      # Filter by Year
       selectInput(inputId = "year_filter",
                   label = "Filter by year",
                   choices = c("All", "2022", "2023"),
                   selected = "All"
       ),
+      # Filter by Sequence
       sliderInput(inputId = "sequence_filter",
                   label = "Filter by sequence",
                   min = 1,
                   max = 150,
                   value = c(1, 150)
       ),
+      # Filter by Age
       sliderInput(inputId = "age_filter",
                   label = "Filter by age",
                   min = age_min,
                   max = age_max,
                   value = c(age_min, age_max)
       ),
+      # Conditional Filter by Therapy Duration
       conditionalPanel(
-        condition = "input.tabPanelId == 'plotTabId' && input.plots_tab == 'therapy_tab'", # JavaScript syntax
+        condition = "input.tabPanelId == 'plotTabId' && input.plots_tab == 'Therapy Duration' && input.drug_select != ''", # JavaScript syntax
         selectInput(inputId = "therapy_filter",
                     label = "Filter by therapy duration",
                     choices = c("All", "Short term","Medium term", "Long term"),
                     selected = "All"
         )
       ),
+      # Conditional Filter by Column
       conditionalPanel(
         condition = "input.tabPanelId == 'data_table_tab'", # JavaScript syntax
         checkboxGroupInput(inputId = "df_column_filter",
@@ -79,9 +85,9 @@ ui <- fluidPage(
         )
       )
     ),
-
+    # Main Panel
     mainPanel(
-      width = 9,
+      width = 9, # Width of Main Panel
       tabsetPanel(
         
         id = "tabPanelId",
@@ -137,6 +143,7 @@ ui <- fluidPage(
                    )
                  )
         ),
+        # Additional tab in main panel for the data table
         tabPanel("Table",value="data_table_tab", dataTableOutput("filtered_drug_table")),
         )
       )
@@ -147,7 +154,7 @@ ui <- fluidPage(
 # SERVER-SIDE
 # -----------------------------------------------------------------------------
 server <- function(input, output, session) {
-
+  # Updates medicament name filter
   updateSelectizeInput(session,
                        inputId = 'drug_select',
                        selected = "",
@@ -159,12 +166,28 @@ server <- function(input, output, session) {
                          maxOptions = 10
                        ))
   
+  # Funktion zum Aktualisieren des Sequenzfilters basierend auf der Datentabelle
+  updateSequenceFilter <- function(data) {
+    # Ermitteln der minimalen und maximalen Sequenzwerte in der Tabelle
+    min_sequence <- min(data$drug_seq)
+    max_sequence <- max(data$drug_seq)
+    
+    # Aktualisieren des Sequenzfilters
+    updateSliderInput(session, "sequence_filter",
+                      label = "Filter by sequence",
+                      min = min_sequence,
+                      max = max_sequence,
+                      value = c(min_sequence, max_sequence))
+  }
+  
+  # Updates Data Table
   drug_data <- reactive({
     data <- join_data_drug(v_drugname = input$drug_select)
+    # updateSequenceFilter(data)
     return(data)
   })
   
-  final_data <- reactive({
+  filter_data <- reactive({
     data <- filter_data(drug_data(),
                       v_sex = input$sex_filter,
                       v_age_min = input$age_filter[1],
@@ -173,12 +196,14 @@ server <- function(input, output, session) {
                       v_sequence_min = input$sequence_filter[1],
                       v_sequence_max = input$sequence_filter[2])
     
+    
+    
     return(data)
     
   })
   
   output$filtered_drug_table <- renderDataTable({
-    data <- final_data()
+    data <- filter_data()
     new_df <- data %>%
       select(input$df_column_filter)
     return(new_df)
@@ -196,11 +221,11 @@ server <- function(input, output, session) {
 
   # Render reports per quarter plot
   output$reports_per_quarter_plot <- renderPlot({
-    plot_reports_per_quarter(final_data())
+    plot_reports_per_quarter(filter_data())
   })
   
   output$reports_per_quarter_data <- renderDataTable({
-    num_reports_per_quarter(final_data())
+    num_reports_per_quarter(filter_data())
   }, options = list(
     searching = TRUE,
     pageLength = 10,
@@ -226,11 +251,11 @@ server <- function(input, output, session) {
 
   # Render reports per sequence plot
   output$reports_per_sequence_plot <- renderPlot({
-    plot_reports_per_sequence(final_data())
+    plot_reports_per_sequence(filter_data())
   })
   
   output$reports_per_sequence_data <- renderDataTable({
-    num_reports_per_sequence(final_data())
+    num_reports_per_sequence(filter_data(), input$sequence_filter[1], input$sequence_filter[2])
   }, options = list(
       searching = TRUE,
       pageLength = 10,
@@ -255,18 +280,18 @@ server <- function(input, output, session) {
 
   # Render therapy duration plot
   output$therapy_durations_plot <- renderPlot({
-    plot_therapy_durations(final_data(), input$therapy_filter)
+    plot_therapy_durations(filter_data(), input$therapy_filter)
   })
   
   #----------------------------------------------------------------------
 
   # Render top 10 indications plot
   output$top_indications_plot <- renderPlot({
-    plot_top_indications(final_data())
+    plot_top_indications(filter_data())
   })
   
   output$top_indications_data <- renderDataTable({
-    top_indications(final_data())
+    top_indications(filter_data())
   }, options = list(
     searching = TRUE,
     pageLength = 10,
@@ -292,11 +317,11 @@ server <- function(input, output, session) {
 
   # Render outcome distribution plot
   output$outcome_distribution_plot <- renderPlot({
-    plot_outcome_distribution(final_data())
+    plot_outcome_distribution(filter_data())
   })
   
   output$outcome_distribution_data <- renderDataTable({
-    outcome_distribution(final_data())
+    outcome_distribution(filter_data())
   }, options = list(
     searching = TRUE,
     pageLength = 10,
@@ -322,11 +347,11 @@ server <- function(input, output, session) {
   
   # Render outcome drug_reaction_plot
   output$drug_reaction_plot <- renderPlot({
-    plot_drug_reaction(final_data())
+    plot_drug_reaction(filter_data())
   })
   
   output$drug_reaction_data <- renderDataTable({
-    drug_react_distribution(final_data())
+    drug_react_distribution(filter_data())
   }, options = list(
     pageLength = 10,
     searching = TRUE,
@@ -351,7 +376,7 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------
 
   output$medication_mix_data <- renderDataTable({
-    prod_ai_distribution(final_data())
+    prod_ai_distribution(filter_data())
   }, options = list(
     pageLength = 10,
     searching = TRUE,
@@ -378,11 +403,11 @@ server <- function(input, output, session) {
   
   # Render outcome Medication mix
   output$top_manufacturers_plot <- renderPlot({
-    plot_manufactorer_distribution(final_data())
+    plot_manufactorer_distribution(filter_data())
   })
   
   output$top_manufacturers_data <- renderDataTable({
-    manufactorer_distribution(final_data())
+    manufactorer_distribution(filter_data())
   }, options = list(
     searching = TRUE,
     pageLength = 10,
