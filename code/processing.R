@@ -6,7 +6,7 @@ load_data <- function(entity, years) {
   data <- data.table()
   for (year in years) {
     for (quarter in quarters) {
-      filename <- paste0('../../data/ASCII/', entity, year, quarter, '.txt')
+      filename <- paste0('data/ASCII/', entity, year, quarter, '.txt')
       if (file.exists(filename)) {
         print(paste("Loading file:", filename)) 
         
@@ -101,7 +101,7 @@ REAC <- REAC[REAC[, .I[which.max(.I)], by = .(primaryid, caseid)]$V1]
 INDI <- INDI[INDI[, .I[which.max(.I)], by = .(primaryid)]$V1]
 
 
-# select only needed columns
+# selektiere nur notwendige Spalten
 DRUG <- DRUG[, .(primaryid, caseid, drug_seq, drugname, prod_ai, route, year, quarter)]
 DEMO <- DEMO[, .(primaryid, age, sex, wt, reporter_country, mfr_sndr)]
 THER <- THER[, .(primaryid, caseid, drug_seq, dur_converted, start_dt, end_dt)]
@@ -109,7 +109,7 @@ INDI <- INDI[, .(primaryid, caseid, drug_seq, indi_pt)]
 OUTC <- OUTC[, .(primaryid, caseid, outc_cod, outcome_decoded)]
 REAC <- REAC[, .(primaryid, caseid, pt, drug_rec_act)]
 
-
+# Erstellen neuer files
 fwrite(DRUG, "../../data/processed_data/DRUG.csv")
 fwrite(DEMO, "../../data/processed_data/DEMO.csv")
 fwrite(THER, "../../data/processed_data/THER.csv")
