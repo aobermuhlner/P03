@@ -208,8 +208,26 @@ server <- function(input, output, session) {
   
   
   output$info_text <- renderText({
-    return("Enter Text Here")
+    return(
+      paste(
+        "Instructions:",
+        "\n\nFiltering Process:",
+        "\n1. From the dropdown menu, select a medication. This menu displays the 10 most common drugs for convenience.",
+        "Alternatively, you can manually enter the name of the medication.",
+        "\n2. Filtering based on gender and year is possible via the dropdown menus.",
+        "\n3. You can specify desired ranges for sequences and age.",
+        "\n\nUnder the 'Plots' tab:",
+        "\n1. You will find all tabs providing information about the side effects.",
+        "\n2. Some graphs are accompanied by a table below that you can sort and filter.",
+        "\n\nFor 'Therapy Duration':",
+        "\n1. You have the additional option to filter based on the category of therapy type,",
+        "such as Short term, Medium term, and Long term.",
+        "\n\nUnder the 'Table' tab:",
+        "\n1. You can directly search for content within the table."
+      )
+    )
   })
+  
   
   # Every plot outsourced and handled in data_reader.R
 

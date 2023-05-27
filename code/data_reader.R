@@ -64,54 +64,9 @@ filter_data <- function(data, v_sex = NULL, v_age_min = NULL, v_age_max = NULL, 
 ##################################################
 
 
-# Function Report per quarter
-num_reports_per_quarter <- function(data){
-  reports <- data[, .N, by = .(quarter)]
-  return(reports)
-}
-
-# Function Report per sequence
-num_reports_per_sequence <- function(data){
-  reports <- data[, .N, by = drug_seq]
-  return(reports)
-}
 
 
-# Function Therapy
-calc_therapy_duration_relative <- function(data, therapy_length) {
-  ther_data <- data[!is.na(dur_converted) & dur_converted > 0]
-  if (therapy_length == "Short term") {
-    ther_data <- ther_data[dur_converted <= 30]
-  } else if (therapy_length == "Medium term") {
-    ther_data <- ther_data[dur_converted > 30 & dur_converted <= 365]
-  } else if (therapy_length == "Long term") {
-    ther_data <- ther_data[dur_converted > 365]
-  } 
-  return(ther_data$dur_converted)
-}
 
-# Function Indication
-top_indications <- function(data){
-  data <- data[!is.na(indi_pt)]
-  indications <- data[, .N, by = indi_pt]
-  return(indications)
-}
-
-
-# Function Outcome
-outcome_distribution <- function(data){
-  data <- data[!is.na(outcome_decoded) & !is.na(end_dt)]
-  outcome_dist <- data[, .N, by = outcome_decoded]
-  return(outcome_dist)
-}
-
-
-# Function Manufacturer
-manufactorer_distribution <- function(data){
-  data_complete_mfr <- data[!is.na(mfr_sndr)]
-  manufactorer_dist <- data_complete_mfr[, .N, by = mfr_sndr]
- return(manufactorer_dist)
-}
 
 # Function Drug mix
 prod_ai_distribution <- function(data){
@@ -120,17 +75,17 @@ prod_ai_distribution <- function(data){
   return(prod_ai_dist)
 }
 
-# Function Reaction
-drug_react_distribution <- function(data){
-  data_complete_drug_reaction <- data[!is.na(pt)]
-  drug_react <- data_complete_drug_reaction[, .N, by = pt]
-  return(drug_react)
-}
-
 
 
 # Plots
+
+
 # Plot report per quarter
+num_reports_per_quarter <- function(data){
+  reports <- data[, .N, by = .(quarter)]
+  return(reports)
+}
+
 plot_reports_per_quarter <- function(data){
   reports_per_quarter <- num_reports_per_quarter(data)
   
@@ -153,6 +108,11 @@ plot_reports_per_quarter <- function(data){
 # reports per sequence
 
 # Plot Reports per sequence
+num_reports_per_sequence <- function(data){
+  reports <- data[, .N, by = drug_seq]
+  return(reports)
+}
+
 plot_reports_per_sequence <- function(data){
   reports_per_sequence <- num_reports_per_sequence(data)
   reports_per_sequence <- dplyr::filter(reports_per_sequence, drug_seq <= 50)
@@ -163,6 +123,18 @@ plot_reports_per_sequence <- function(data){
 }
 
 # Plot Therapy duration
+calc_therapy_duration_relative <- function(data, therapy_length) {
+  ther_data <- data[!is.na(dur_converted) & dur_converted > 0]
+  if (therapy_length == "Short term") {
+    ther_data <- ther_data[dur_converted <= 30]
+  } else if (therapy_length == "Medium term") {
+    ther_data <- ther_data[dur_converted > 30 & dur_converted <= 365]
+  } else if (therapy_length == "Long term") {
+    ther_data <- ther_data[dur_converted > 365]
+  } 
+  return(ther_data$dur_converted)
+}
+
 plot_therapy_durations <- function(data, therapy_filter){
   therapy_durations <- calc_therapy_duration_relative(data, therapy_filter)
   therapy_df <- data.frame(duration = therapy_durations)
@@ -184,6 +156,12 @@ plot_therapy_durations <- function(data, therapy_filter){
 # plot indications
 
 # Plot Indication
+top_indications <- function(data){
+  data <- data[!is.na(indi_pt)]
+  indications <- data[, .N, by = indi_pt]
+  return(indications)
+}
+
 plot_top_indications <- function(data){
   indications_data <- top_indications(data)
   indications_data <- indications_data[order(indications_data$N, decreasing = TRUE),][1:10,]
@@ -197,6 +175,12 @@ plot_top_indications <- function(data){
 
 
 # Plot Outcome
+outcome_distribution <- function(data){
+  data <- data[!is.na(outcome_decoded) & !is.na(end_dt)]
+  outcome_dist <- data[, .N, by = outcome_decoded]
+  return(outcome_dist)
+}
+
 plot_outcome_distribution <- function(data){
   outcome_data <- outcome_distribution(data)
   outcome_data <- outcome_data[order(outcome_data$N, decreasing = TRUE),][1:10,]
@@ -224,6 +208,12 @@ plot_prod_ai_distribution <- function(data) {
 
 
 # Manufactorer distribution
+manufactorer_distribution <- function(data){
+  data_complete_mfr <- data[!is.na(mfr_sndr)]
+  manufactorer_dist <- data_complete_mfr[, .N, by = mfr_sndr]
+  return(manufactorer_dist)
+}
+
 plot_manufactorer_distribution <- function(data) {
   manufactorer_dist <- manufactorer_distribution(data)
   manufactorer_dist <- manufactorer_dist[order(manufactorer_dist$N, decreasing = TRUE),][1:10,]
@@ -238,6 +228,12 @@ plot_manufactorer_distribution <- function(data) {
 
 
 # Plot Drug Reaction
+drug_react_distribution <- function(data){
+  data_complete_drug_reaction <- data[!is.na(pt)]
+  drug_react <- data_complete_drug_reaction[, .N, by = pt]
+  return(drug_react)
+}
+
 plot_drug_reaction <- function(data) {
   reaction <- drug_react_distribution(data)
   reaction <- reaction[order(reaction$N, decreasing = TRUE),][1:10,]
