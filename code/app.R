@@ -210,20 +210,19 @@ server <- function(input, output, session) {
   output$info_text <- renderText({
     return(
       paste(
-        "Instructions:",
-        "\n\nFiltering Process:",
-        "\n1. From the dropdown menu, select a medication. This menu displays the 10 most common drugs for convenience.",
-        "Alternatively, you can manually enter the name of the medication.",
-        "\n2. Filtering based on gender and year is possible via the dropdown menus.",
-        "\n3. You can specify desired ranges for sequences and age.",
-        "\n\nUnder the 'Plots' tab:",
-        "\n1. You will find all tabs providing information about the side effects.",
-        "\n2. Some graphs are accompanied by a table below that you can sort and filter.",
-        "\n\nFor 'Therapy Duration':",
-        "\n1. You have the additional option to filter based on the category of therapy type,",
-        "such as Short term, Medium term, and Long term.",
-        "\n\nUnder the 'Table' tab:",
-        "\n1. You can directly search for content within the table."
+        "Instructions",
+        
+        "Filters:",
+        "Select a medication either from the dropdown menu displaying the top 10 most commonly occurring medications or enter a specific medication.",
+        "Filter by gender and year using the dropdown menus.",
+        "Enter desired ranges for sequences and age.",
+        
+        "Under the Plots tab:",
+        "You will find multiple tabs providing information on side effects. Some tabs include tables that can be sorted and filtered.",
+        "For Therapy Duration, you can additionally filter by the category of therapy type (Short term, medium term, and long term).",
+        "There is an additional tab named Table where you can directly search for content within the table.",
+        
+        "Note: This instruction has been translated from German to English."
       )
     )
   })
