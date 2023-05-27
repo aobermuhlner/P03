@@ -145,6 +145,7 @@ ui <- fluidPage(
         ),
         # Additional tab in main panel for the data table
         tabPanel("Table",value="data_table_tab", dataTableOutput("filtered_drug_table")),
+        tabPanel("Info", textOutput("info_text")),
         )
       )
       )
@@ -204,6 +205,11 @@ server <- function(input, output, session) {
         targets = "_all" # Choose which column searchbar
       )
     )))
+  
+  
+  output$info_text <- renderText({
+    return("Enter Text Here")
+  })
   
   # Every plot outsourced and handled in data_reader.R
 
