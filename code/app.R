@@ -145,7 +145,7 @@ ui <- fluidPage(
         ),
         # Additional tab in main panel for the data table
         tabPanel("Table",value="data_table_tab", dataTableOutput("filtered_drug_table")),
-        tabPanel("Info", textOutput("info_text")),
+        tabPanel("Info", uiOutput("info_text")),
         )
       )
       )
@@ -206,24 +206,24 @@ server <- function(input, output, session) {
       )
     )))
   
-  
-  output$info_text <- renderText({
-    return(
-      paste(
-        "Instructions",
-        
-        "Filters:",
-        "Select a medication either from the dropdown menu displaying the top 10 most commonly occurring medications or enter a specific medication.",
-        "Filter by gender and year using the dropdown menus.",
-        "Enter desired ranges for sequences and age.",
-        
-        "Under the Plots tab:",
-        "You will find multiple tabs providing information on side effects. Some tabs include tables that can be sorted and filtered.",
-        "For Therapy Duration, you can additionally filter by the category of therapy type (Short term, medium term, and long term).",
-        "There is an additional tab named Table where you can directly search for content within the table.",
-        
+  # Hints and Instructions Text
+  output$info_text <- renderUI({
+
+      tags$div(
+        "Instructions", tags$br(),
+        tags$br(),
+        "Filters:", tags$br(),
+        "Select a medication either from the dropdown menu displaying the top 10 most commonly occurring medications or enter a specific medication.", tags$br(),
+        "Filter by gender and year using the dropdown menus.", tags$br(),
+        "Enter desired ranges for sequences and age.", tags$br(),
+        tags$br(),
+        "Under the Plots tab:", tags$br(),
+        "You will find multiple tabs providing information on side effects. Some tabs include tables that can be sorted and filtered.", tags$br(),
+        "For Therapy Duration, you can additionally filter by the category of therapy type (Short term, medium term, and long term).", tags$br(),
+        "There is an additional tab named Table where you can directly search for content within the table.", tags$br(),
+        tags$br(),
         "Note: This instruction has been translated from German to English."
-      )
+      
     )
   })
   
